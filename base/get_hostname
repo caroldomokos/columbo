@@ -2,7 +2,7 @@
 echo "Hostname:"
 read hostname
 # overite the /etc/hostname with the new value
-cat <<EOF > /etc/hostname
+sudo bash -c "cat > /etc/hostname" <<EOF
 $hostname
 EOF
 
