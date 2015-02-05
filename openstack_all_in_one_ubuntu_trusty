@@ -1,10 +1,12 @@
 #!/bin/bash
 # we start by collecting the necessary data to build the system
 echo "We start by collecting the necessary data to build the system"
-./base/get_hostname
 echo "Fixed IP address:"
 read ip_address
 echo $ip_address
+export IP_ADDRESS=$ip_address
+./base/set_hosts_file
+./base/get_hostname
 #let's update the system
 echo "Let's update the system. You will need to have your sudo passwrord ready and type it in when requested"
 ./base/update_ubuntu
