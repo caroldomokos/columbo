@@ -1,0 +1,4 @@
+#!/bin/bash
+#first let's update the system
+echo "Let's update the system. You will need to have your sudo passwrord ready and type it in when requested"
+./update_ubuntu
