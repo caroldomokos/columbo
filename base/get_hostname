@@ -1,0 +1,8 @@
+#!/bin/bash
+echo "Hostname:"
+read hostname
+# overite the /etc/hostname with the new value
+cat <<EOF > /etc/hostname
+$hostname
+EOF
+
