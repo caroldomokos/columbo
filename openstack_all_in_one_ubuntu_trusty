@@ -5,8 +5,8 @@ echo "Fixed IP address:"
 read ip_address
 echo $ip_address
 export IP_ADDRESS=$ip_address
-./base/set_hosts_file
 ./base/get_hostname
+./base/set_hosts_file
 #let's update the system
 echo "Let's update the system. You will need to have your sudo passwrord ready and type it in when requested"
 ./base/update_ubuntu

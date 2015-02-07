@@ -1,6 +1,6 @@
 #!/bin/bash
 # add to /etc/hosts the new value for our hostname
 sudo bash -c "cat >> /etc/hosts" <<EOF
-$IP_ADDRESS	LUBUNTU32
+$IP_ADDRESS	$HOST_NAME
 EOF
 
