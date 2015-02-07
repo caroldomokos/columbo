@@ -1,16 +1,16 @@
 #!/bin/bash
 # we start by collecting the necessary data to build the system
 echo "We start by collecting the necessary data to build the system"
-get the ip address on eth0
+#get the ip address on eth0
 ip_address=`ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
-echo "Hostname:"
+echo "The hostname you want to use:"
 read host_name
 # overite the /etc/hostname with the new value
 sudo bash -c "cat > /etc/hostname" <<EOF
 $host_name
 EOF
-# add to /etc/hosts the new value for our hostname
-sudo bash -c "cat >> /etc/hosts" <<EOF
+# overwrite /etc/hosts with the new value for our hostname and  fixed ip - not pointing to 127.0.0.1
+sudo bash -c "cat > /etc/hosts" <<EOF
 $ip_address     $host_name
 EOF
 #let's update the system
