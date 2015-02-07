@@ -1,7 +1,9 @@
 #!/bin/bash
 # we start by collecting the necessary data to build the system
 echo "We start by collecting the necessary data to build the system"
-ip_address=$echo `ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
+get the ip address on eth0
+ip_address=$`ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
+echo $ip_address
 echo "Hostname:"
 read host_name
 # overite the /etc/hostname with the new value
