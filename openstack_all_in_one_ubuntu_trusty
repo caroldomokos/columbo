@@ -1,4 +1,6 @@
 #!/bin/bash
+# short intro
+read -p "This script will install openstack basic components (keystone,nova,neutron,glance) on a single host. Juno, ubuntu trusty, etc To be completed. Press enter to continue"
 # we start by collecting the necessary data to build the system
 echo "We start by collecting the necessary data to build the system"
 #get the ip address on eth0
