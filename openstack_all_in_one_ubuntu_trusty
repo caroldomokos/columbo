@@ -1,8 +1,7 @@
 #!/bin/bash
 # we start by collecting the necessary data to build the system
 echo "We start by collecting the necessary data to build the system"
-echo "Enter the fixed IP address of your unique network interface:"
-read ip_address
+ip_address=$echo `ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
 echo "Hostname:"
 read host_name
 # overite the /etc/hostname with the new value
