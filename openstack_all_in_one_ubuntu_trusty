@@ -17,8 +17,13 @@ EOF
 echo "Let's update the system. You will need to have your sudo passwrord ready and type it in when requested"
 #./base/update_ubuntu
 #install mariadb with password
-echo "the password used for mariadb"
+echo "Enter the password to be used for mariadb database"
 read mariadb_pass
 export DEBIAN_FRONTEND=noninteractive
-debconf-set-selections <<< 'mariadb-server-5.5 mysql-server/root_password password' $mariadb_pass
-debconf-set-selections <<< 'mariadb-server-5.5 mysql-server/root_password_again password' $mariadb_pass
+debconf-set-selections -v <<EOF
+mariadb-server-5.5 mysql-server/root_password password $mariadb_pass
+EOF
+debconf-set-selections -v <<EOF
+mariadb-server-5.5 mysql-server/root_password_again password $mariadb_pass
+EOF
+
