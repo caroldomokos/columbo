@@ -2,6 +2,7 @@
 echo "Hostname:"
 read host_name
 export HOST_NAME=$host_name
+echo $HOST_NAME
 # overite the /etc/hostname with the new value
 sudo bash -c "cat > /etc/hostname" <<EOF
 $host_name

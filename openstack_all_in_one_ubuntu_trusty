@@ -1,12 +1,18 @@
 #!/bin/bash
 # we start by collecting the necessary data to build the system
 echo "We start by collecting the necessary data to build the system"
-echo "Fixed IP address:"
+echo "Enter the fixed IP address of your unique network interface:"
 read ip_address
-echo $ip_address
-export IP_ADDRESS=$ip_address
-./base/get_hostname
-./base/set_hosts_file
+echo "Hostname:"
+read host_name
+# overite the /etc/hostname with the new value
+sudo bash -c "cat > /etc/hostname" <<EOF
+$host_name
+EOF
+# add to /etc/hosts the new value for our hostname
+sudo bash -c "cat >> /etc/hosts" <<EOF
+$ip_address     $host_name
+EOF
 #let's update the system
 echo "Let's update the system. You will need to have your sudo passwrord ready and type it in when requested"
-./base/update_ubuntu
+#./base/update_ubuntu
