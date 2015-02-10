@@ -29,3 +29,7 @@ debconf-set-selections -v <<EOF
 mariadb-server-5.5 mysql-server/root_password_again password $mariadb_pass
 EOF
 apt-get install mariadb-server python-mysqldb -y
+# install rabbit mq
+apt-get install rabbitmq-server -y
+# change guest password
+rabbitmqctl change_password guest $mariadb_pass
