@@ -33,3 +33,10 @@ apt-get install mariadb-server python-mysqldb -y
 apt-get install rabbitmq-server -y
 # change guest password
 rabbitmqctl change_password guest $mariadb_pass
+# Install the Ubuntu Cloud archive keyring and repository
+apt-get install ubuntu-cloud-keyring
+echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
+  "trusty-updates/juno main" > /etc/apt/sources.list.d/cloudarchive-juno.list
+./base/update_ubuntu
+# install the openstack packages
+apt-get install keystone python-keystoneclient glance python-glanceclient nova-api nova-cert nova-conductor nova-consoleauth nova-novncproxy nova-scheduler python-novaclient  nova-compute sysfsutils neutron-server neutron-plugin-ml2 python-neutronclient neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent -y
