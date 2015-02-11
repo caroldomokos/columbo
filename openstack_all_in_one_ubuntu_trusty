@@ -19,7 +19,7 @@ EOF
 echo "Let's update the system. You will need to have your sudo passwrord ready and type it in when requested"
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
   "trusty-updates/juno main" > /etc/apt/sources.list.d/cloudarchive-juno.list
-apt-get update && apt-get dist-upgrade -y
+apt-get update && apt-get -y install ubuntu-cloud-keyring && apt-get dist-upgrade -y
 #install mariadb with password
 echo "Enter the master password to be used for all components (database, rabbitmq, services, etc..)"
 read mariadb_pass
