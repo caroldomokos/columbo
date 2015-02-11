@@ -17,6 +17,7 @@ $ip_address     $host_name
 EOF
 #let's update the system
 echo "Let's update the system. You will need to have your sudo passwrord ready and type it in when requested"
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA 
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
   "trusty-updates/juno main" > /etc/apt/sources.list.d/cloudarchive-juno.list
 apt-get update && apt-get -y install ubuntu-cloud-keyring && apt-get dist-upgrade -y
