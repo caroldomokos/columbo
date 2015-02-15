@@ -40,3 +40,10 @@ rabbitmqctl change_password guest $mariadb_pass
 apt-get install ubuntu-cloud-keyring
 # install the openstack packages
 apt-get install keystone python-keystoneclient glance python-glanceclient nova-api nova-cert nova-conductor nova-consoleauth nova-novncproxy nova-scheduler python-novaclient  nova-compute sysfsutils neutron-server neutron-plugin-ml2 python-neutronclient neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent -y
+##############starting keystone###############
+sudo bash -c "cat > /etc/keystone/keystone.conf" <<EOF
+[DEFAULT]
+admin_token=$mariadb_pass
+admin_bind_host=$ip_address
+EOF
+
