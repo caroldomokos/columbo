@@ -1,9 +1,11 @@
 #!/bin/bash
 # short intro
-read -p "This script will install openstack basic components (keystone,nova,neutron,glance) on a single host. Juno, ubuntu trusty, etc To be completed. Press enter to continue"
+# source http://www.cyberciti.biz/tips/linux-unix-pause-command.html
+read -p "This script will install openstack basic components (keystone,nova,neutron,glance) on a single host. Juno, ubuntu trusty, etc To be completed.U need to run it as root/sudo Press enter to continue"
 # we start by collecting the necessary data to build the system
 echo "We start by collecting the necessary data to build the system"
 #get the ip address on eth0
+# source http://stackoverflow.com/questions/21336126/linux-bash-script-to-extract-ip-address
 ip_address=`ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
 echo "The hostname you want to use:"
 read host_name
@@ -16,34 +18,78 @@ sudo bash -c "cat > /etc/hosts" <<EOF
 $ip_address     $host_name
 EOF
 #let's update the system
-echo "Let's update the system. You will need to have your sudo passwrord ready and type it in when requested"
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA 
+echo "Let's update the system"
+# add the ubuntu cloud ring support for juno
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
   "trusty-updates/juno main" > /etc/apt/sources.list.d/cloudarchive-juno.list
 apt-get update && apt-get -y install ubuntu-cloud-keyring && apt-get dist-upgrade -y
 #install mariadb with password
+# source http://dba.stackexchange.com/questions/35866/install-mariadb-without-password-prompt-in-ubuntu
+#	http://stackoverflow.com/questions/4937792/using-variables-inside-a-bash-heredoc
 echo "Enter the master password to be used for all components (database, rabbitmq, services, etc..)"
-read mariadb_pass
+read master_pass
 export DEBIAN_FRONTEND=noninteractive
 debconf-set-selections -v <<EOF
-mariadb-server-5.5 mysql-server/root_password password $mariadb_pass
+mariadb-server-5.5 mysql-server/root_password password $master_pass
 EOF
 debconf-set-selections -v <<EOF
-mariadb-server-5.5 mysql-server/root_password_again password $mariadb_pass
+mariadb-server-5.5 mysql-server/root_password_again password $master_pass
 EOF
 apt-get install mariadb-server python-mysqldb -y
+# create  loop to configure all datatbases
+# source http://www.tldp.org/LDP/abs/html/loops1.html
+#	http://www.bluepiccadilly.com/2011/12/creating-mysql-database-and-user-command-line-and-bash-script-automate-process
+for db_and_user_name in "keystone" "glance" "nova" "neutron"
+do
+mysql -uroot -p$master_pass -e "create database if not exists $db_and_user_name;"
+mysql -uroot -p$master_pass -e "GRANT ALL PRIVILEGES ON db_and_user_name.* TO db_and_user_name@$localhost IDENTIFIED BY '$master_pass';"
+mysql -uroot -p$master_pass -e "GRANT ALL PRIVILEGES ON db_and_user_name.* TO db_and_user_name@'%' IDENTIFIED BY '$master_pass';"
+mysql -uroot -p$master_pass -e "FLUSH PRIVILEGES;"
+done
 # install rabbit mq
 apt-get install rabbitmq-server -y
 # change guest password
-rabbitmqctl change_password guest $mariadb_pass
-# Install the Ubuntu Cloud archive keyring and repository
-apt-get install ubuntu-cloud-keyring
+rabbitmqctl change_password guest $master_pass
 # install the openstack packages
 apt-get install keystone python-keystoneclient glance python-glanceclient nova-api nova-cert nova-conductor nova-consoleauth nova-novncproxy nova-scheduler python-novaclient  nova-compute sysfsutils neutron-server neutron-plugin-ml2 python-neutronclient neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent -y
 ##############starting keystone###############
+# overwrite the keystone config file
 sudo bash -c "cat > /etc/keystone/keystone.conf" <<EOF
 [DEFAULT]
-admin_token=$mariadb_pass
+admin_token=$master_pass
 admin_bind_host=$ip_address
+verbose=true
+log_dir=/var/log/keystone
+[assignment]
+[auth]
+[cache]
+[catalog]
+[credential]
+[database]
+connection=mysql://keystone:'$master_pass'@columbo/keystone
+[ec2]
+[endpoint_filter]
+[federation]
+[identity]
+[kvs]
+[ldap]
+[matchmaker_ring]
+[memcache]
+[oauth1]
+[os_inherit]
+[paste_deploy]
+[policy]
+[revoke]
+[signing]
+[ssl]
+[stats]
+[token]
+provider=keystone.token.providers.uuid.Provider
+driver=keystone.token.backends.sql.Token
+[trust]
+[extra_headers]
+Distribution = Ubuntu
 EOF
+##############starting glance###############
+# overwrite glance config files
 
