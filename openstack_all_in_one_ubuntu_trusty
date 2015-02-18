@@ -66,7 +66,7 @@ log_dir=/var/log/keystone
 [catalog]
 [credential]
 [database]
-connection=mysql://keystone:'$master_pass'@columbo/keystone
+connection=mysql://keystone:$master_pass@$host_name/keystone
 [ec2]
 [endpoint_filter]
 [federation]
