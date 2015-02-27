@@ -7,6 +7,8 @@ echo "We start by collecting the necessary data to build the system"
 #get the ip address on eth0
 # source http://stackoverflow.com/questions/21336126/linux-bash-script-to-extract-ip-address
 ip_address=`ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
+# get the IP address on eth1
+ip_address_eth1=`ifconfig eth1 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
 echo "The hostname you want to use:"
 read host_name
 # overite the /etc/hostname with the new value
@@ -373,3 +375,136 @@ service nova-conductor restart
 service nova-novncproxy restart
 #because this configuration uses a SQL database server, you can remove the SQLite database file:
 rm -f /var/lib/nova/nova.sqlite
+sudo bash -c "cat > /etc/nova/nova-compute.conf" <<EOF
+[DEFAULT]
+compute_driver=libvirt.LibvirtDriver
+[libvirt]
+virt_type=qemu
+EOF
+###verification time
+nova service-list > nova_test_results
+nova image-list >> nova_test_results
+#####################neutron###########################
+keystone user-create --name neutron --pass $master_pass
+keystone user-role-add --user neutron --tenant service --role admin
+keystone service-create --name neutron --type network \
+  --description "OpenStack Networking"
+keystone endpoint-create \
+  --service-id $(keystone service-list | awk '/ network / {print $2}') \
+  --publicurl http://$host_name:9696 \
+  --adminurl http://$host_name:9696 \
+  --internalurl http://$host_name:9696 \
+  --region regionOne
+sudo bash -c "cat > /etc/neutron/neutron.conf <<EOF
+[DEFAULT]
+verbose=True
+lock_path = $state_path/lock
+core_plugin = ml2
+service_plugins = router
+auth_strategy = keystone
+allow_overlapping_ips = True
+notify_nova_on_port_status_changes = True
+notify_nova_on_port_data_changes = True
+nova_url = http://$host_name:8774/v2
+nova_region_name = regionOne
+nova_admin_username = nova
+nova_admin_tenant_id = $(keystone tenant-get service | awk '/id/ {print $4}')
+nova_admin_password = $master_pass
+rabbit_host=$host_name
+rabbit_password=$master_pass
+rpc_backend=rabbit
+[matchmaker_redis]
+[matchmaker_ring]
+[quotas]
+[agent]
+root_helper = sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf
+[keystone_authtoken]
+auth_uri = http://$host_name:5000/v2.0
+identity_uri = http://$host_name:35357
+admin_tenant_name = service
+admin_user = neutron
+admin_password = $master_pass
+[database]
+connection=mysql://neutron:$master_pass@$host_name:3306/neutron
+[service_providers]
+service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
+service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+EOF
+sudo bash -c "cat > /etc/neutron/plugins/ml2/ml2_conf.ini" <<EOF
+[ml2]
+type_drivers = flat,gre
+tenant_network_types = gre
+mechanism_drivers = openvswitch
+[ml2_type_flat]
+flat_networks = external
+[ml2_type_vlan]
+[ml2_type_gre]
+tunnel_id_ranges = 1:1000
+[ml2_type_vxlan]
+[securitygroup]
+enable_security_group = True
+enable_ipset = True
+firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+[ovs]
+local_ip = $ip_address_eth1
+enable_tunneling = True
+bridge_mappings = external:br-ex
+[agent]
+tunnel_types = gre
+EOF
+su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade juno" neutron
+service nova-api restart
+service nova-scheduler restart
+service nova-conductor restart
+service neutron-server restart
+###testing again
+neutron ext-list > neutron_test_results
+echo "1" > /proc/sys/net/ipv4/ip_forward
+echo "0" > /proc/sys/net/ipv4/conf/all/rp_filter
+echo "0" > /proc/sys/net/ipv4/conf/default/rp_filter
+sysctl -p
+
+sudo bash -c "cat > /etc/neutron/l3_agent.ini" <<EOF
+[DEFAULT]
+verbose = True
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+use_namespaces = True
+external_network_bridge = br-ex
+EOF
+
+sudo bash -c "cat > /etc/neutron/dhcp_agent.ini" <<EOF
+[DEFAULT]
+verbose = True
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
+use_namespaces = True
+dnsmasq_config_file = /etc/neutron/dnsmasq-neutron.conf
+EOF
+sudo bash -c "cat > /etc/neutron/dnsmasq-neutron.conf" <<EOF
+dhcp-option-force=26,1454
+EOF
+pkill dnsmasq
+sudo bash -c "cat > /etc/neutron/metadata_agent.ini" <<EOF
+[DEFAULT]
+verbose = True
+auth_url = http://$host_name:5000/v2.0
+auth_region = RegionOne
+admin_tenant_name = service
+admin_user = neutron
+admin_password = $master_pass
+nova_metadata_ip = $host_name
+metadata_proxy_shared_secret = $master_pass
+EOF
+service nova-api restart
+#OVS section
+service openvswitch-switch restart
+ovs-vsctl add-br br-ex
+ovs-vsctl add-port br-ex eth2
+service neutron-plugin-openvswitch-agent restart
+service neutron-l3-agent restart
+service neutron-dhcp-agent restart
+service neutron-metadata-agent restart
+###testing
+neutron agent-list > neutron_test_results
+
