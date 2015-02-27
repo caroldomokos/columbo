@@ -9,6 +9,20 @@ echo "We start by collecting the necessary data to build the system"
 ip_address=`ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
 # get the IP address on eth1
 ip_address_eth1=`ifconfig eth1 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
+# set the network file
+sudo bash -c "cat > /etc/network/interfaces" <<EOF
+auto lo
+iface lo inet loopback
+auto eth0
+iface eth0 inet dhcp
+auto eth1
+iface eth1 inet dhcp
+auto eth2
+iface eth2 inet manual
+inet manual
+up ip link set dev $IFACE up
+down ip link set dev $IFACE down
+EOF
 echo "The hostname you want to use:"
 read host_name
 # overite the /etc/hostname with the new value
