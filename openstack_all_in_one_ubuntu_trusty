@@ -23,6 +23,8 @@ inet manual
 up ip link set dev $IFACE up
 down ip link set dev $IFACE down
 EOF
+# restart networking
+sudo ifdown --exclude=lo -a && sudo ifup --exclude=lo -a
 echo "The hostname you want to use:"
 read host_name
 # overite the /etc/hostname with the new value
