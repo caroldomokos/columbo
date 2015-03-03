@@ -6,15 +6,31 @@ read -p "This script will install openstack basic components (keystone,nova,neut
 echo "We start by collecting the necessary data to build the system"
 #get the ip address on eth0
 # source http://stackoverflow.com/questions/21336126/linux-bash-script-to-extract-ip-address
-ip_address=`ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
+#ip_address=`ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
 # get the IP address on eth1
-ip_address_eth1=`ifconfig eth1 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
+#ip_address_eth1=`ifconfig eth1 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
+echo "hostname:"
+read host_name
+echo "master password:"
+read master_pass
+echo "eth0 IP address(admin):"
+read ip_eth0
+echo "eth0 mask(admin):"
+read mask_eth0
+echo "eth0 default gateway(admin):"
+read dg_eth0
+echo "eth1 IP address(tunnels):"
+read ip_eth1
+echo "eth1 IP mask(tunnels):"
+read ip_eth0
+
 # set the network file
 sudo bash -c "cat > /etc/network/interfaces" <<EOF
 auto lo
 iface lo inet loopback
 auto eth0
-iface eth0 inet dhcp
+iface eth0 inet static
+ip address
 auto eth1
 iface eth1 inet dhcp
 auto eth2
@@ -24,15 +40,13 @@ down ip link set dev $IFACE down
 EOF
 # restart networking
 sudo ifdown --exclude=lo -a && sudo ifup --exclude=lo -a
-echo "The hostname you want to use:"
-read host_name
 # overite the /etc/hostname with the new value
 sudo bash -c "cat > /etc/hostname" <<EOF
 $host_name
 EOF
 # overwrite /etc/hosts with the new value for our hostname and  fixed ip - not pointing to 127.0.0.1
 sudo bash -c "cat > /etc/hosts" <<EOF
-$ip_address     $host_name
+$ip_eth0     $host_name
 EOF
 #let's update the system
 echo "Let's update the system"
@@ -43,8 +57,6 @@ apt-get update && apt-get -y install ubuntu-cloud-keyring && apt-get dist-upgrad
 #install mariadb with password
 # source http://dba.stackexchange.com/questions/35866/install-mariadb-without-password-prompt-in-ubuntu
 #	http://stackoverflow.com/questions/4937792/using-variables-inside-a-bash-heredoc
-echo "Enter the master password to be used for all components (database, rabbitmq, services, etc..)"
-read master_pass
 export DEBIAN_FRONTEND=noninteractive
 debconf-set-selections -v <<EOF
 mariadb-server-5.5 mysql-server/root_password password $master_pass
@@ -74,7 +86,7 @@ apt-get install keystone python-keystoneclient glance python-glanceclient nova-a
 sudo bash -c "cat > /etc/keystone/keystone.conf" <<EOF
 [DEFAULT]
 admin_token=$master_pass
-admin_bind_host=$ip_address
+admin_bind_host=$ip_eth0
 verbose=true
 log_dir=/var/log/keystone
 [assignment]
@@ -345,9 +357,9 @@ rpc_backend = rabbit
 rabbit_host = $host_name
 rabbit_password = $master_pass
 auth_strategy = keystone
-my_ip = $ip_address
-vncserver_listen = $ip_address
-vncserver_proxyclient_address = $ip_address
+my_ip = $ip_eth0
+vncserver_listen = $ip_eth0
+vncserver_proxyclient_address = $ip_eth0
 verbose = True
 network_api_class = nova.network.neutronv2.api.API
 security_group_api = neutron
@@ -355,7 +367,7 @@ linuxnet_interface_driver = nova.network.linux_net.LinuxOVSInterfaceDriver
 firewall_driver = nova.virt.firewall.NoopFirewallDriver
 vnc_enabled = True
 vncserver_listen = 0.0.0.0
-vncserver_proxyclient_address = $ip_address
+vncserver_proxyclient_address = $ip_eth0
 novncproxy_base_url = http://$host_name:6080/vnc_auto.html
 [database]
 connection = mysql://nova:$master_pass@$host_name/nova
@@ -461,7 +473,7 @@ enable_security_group = True
 enable_ipset = True
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
 [ovs]
-local_ip = $ip_address_eth1
+local_ip = $ip_eth1
 enable_tunneling = True
 bridge_mappings = external:br-ex
 [agent]
