@@ -22,17 +22,20 @@ read dg_eth0
 echo "eth1 IP address(tunnels):"
 read ip_eth1
 echo "eth1 IP mask(tunnels):"
-read ip_eth0
-
+read mask_eth1
 # set the network file
 sudo bash -c "cat > /etc/network/interfaces" <<EOF
 auto lo
 iface lo inet loopback
 auto eth0
 iface eth0 inet static
-ip address
+address $ip_eth0
+netmask $mask_eth0
+gateway $dg_eth0
 auto eth1
-iface eth1 inet dhcp
+iface eth1 inet static
+address $ip_eth1
+netmask $mask_eth1
 auto eth2
 iface eth2 inet manual
 up ip link set dev $IFACE up
