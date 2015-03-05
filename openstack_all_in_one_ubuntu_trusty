@@ -65,6 +65,9 @@ echo "Let's update the system"
 # add the ubuntu cloud ring support for juno
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
   "trusty-updates/juno main" > /etc/apt/sources.list.d/cloudarchive-juno.list
+# add the key 
+#https://github.com/dguitarbite/OpenStack-Folsom-VM-SandBox-Guide/issues/5
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
 apt-get update && apt-get -y install ubuntu-cloud-keyring && apt-get dist-upgrade -y
 #install mariadb with password
 # source http://dba.stackexchange.com/questions/35866/install-mariadb-without-password-prompt-in-ubuntu
