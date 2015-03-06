@@ -40,8 +40,8 @@ EOF
 sudo bash -c "cat >> /etc/network/interfaces" <<'EOF'
 auto eth2
 iface eth2 inet manual
-up ip link set dev '$IFACE' up
-down ip link set dev '$IFACE' down
+up ip link set dev $IFACE up
+down ip link set dev $IFACE down
 EOF
 # restart networking
 sudo ifdown --exclude=lo -a && sudo ifup --exclude=lo -a
