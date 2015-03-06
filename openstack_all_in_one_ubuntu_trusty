@@ -57,9 +57,6 @@ EOF
 sudo bash -c "cat > /etc/resolvconf/resolv.conf.d/base" <<EOF
 nameserver 8.8.8.8
 EOF
-sudo bash -c "cat > /etc/hosts" <<EOF
-$ip_eth0     $host_name
-EOF
 #let's update the system
 echo "Let's update the system"
 # add the ubuntu cloud ring support for juno
