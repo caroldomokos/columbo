@@ -49,7 +49,7 @@ up ip link set dev $IFACE up
 down ip link set dev $IFACE down
 EOF
 # restart networking
-sudo ifdown --exclude=lo -a && sudo ifup --exclude=lo -a
+ifdown --exclude=lo -a && sudo ifup --exclude=lo -a
 # overwrite /etc/hosts with the new value for our hostname and  fixed ip - not pointing to 127.0.0.1
 sudo bash -c "cat > /etc/hosts" <<EOF
 $ip_eth0     $host_name
