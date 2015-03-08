@@ -14,7 +14,7 @@ export LC_ALL
 # restart networking
 ./02restart_network_config
 # overwrite /etc/hosts with the new value for our hostname and  fixed ip - not pointing to 127.0.0.1
-./03host_file_config
+./03hosts_file_config
 # overite the /etc/hostname with the new value
 ./04hostname_config
 # create the dns servers of google
