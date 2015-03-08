@@ -1,0 +1,561 @@
+#!/bin/bash
+# short intro
+# source http://www.cyberciti.biz/tips/linux-unix-pause-command.html
+read -p "This script will install openstack basic components (keystone,nova,neutron,glance) on a single host. Juno, ubuntu trusty, etc To be completed.U need to run it as root/sudo Press enter to continue"
+## good idea stolen from devstack as I get a lot of errors on locale from lxc containers
+unset LANG
+unset LANGUAGE
+LC_ALL=C
+export LC_ALL
+# we start by collecting the necessary data to build the system
+echo "We start by collecting the necessary data to build the system"
+#get the ip address on eth0
+# source http://stackoverflow.com/questions/21336126/linux-bash-script-to-extract-ip-address
+#ip_address=`ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
+# get the IP address on eth1
+#ip_address_eth1=`ifconfig eth1 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
+#echo "hostname:"
+#read host_name
+echo "master password:"
+read master_pass
+echo "eth0 IP address(admin):"
+read ip_eth0
+echo "eth0 mask(admin):"
+read mask_eth0
+echo "eth0 default gateway(admin):"
+read dg_eth0
+echo "eth1 IP address(tunnels):"
+read ip_eth1
+echo "eth1 IP mask(tunnels):"
+read mask_eth1
+# set the network file
+sudo bash -c "cat > /etc/network/interfaces" <<EOF
+auto lo
+iface lo inet loopback
+auto eth0
+iface eth0 inet static
+address $ip_eth0
+netmask $mask_eth0
+gateway $dg_eth0
+auto eth1
+iface eth1 inet static
+address $ip_eth1
+netmask $mask_eth1
+EOF
+sudo bash -c "cat >> /etc/network/interfaces" <<'EOF'
+auto eth2
+iface eth2 inet manual
+up ip link set dev $IFACE up
+down ip link set dev $IFACE down
+EOF
+# restart networking
+ifdown --exclude=lo -a && sudo ifup --exclude=lo -a
+# overwrite /etc/hosts with the new value for our hostname and  fixed ip - not pointing to 127.0.0.1
+#sudo bash -c "cat > /etc/hosts" <<EOF
+#$ip_eth0     $host_name
+#EOF
+# overite the /etc/hostname with the new value
+sudo bash -c "cat > /etc/hostname" <<EOF
+$host_name
+EOF
+# create the dns servers of google
+sudo bash -c "cat > /etc/resolvconf/resolv.conf.d/base" <<EOF
+nameserver 8.8.8.8
+EOF
+#let's update the system
+echo "Let's update the system"
+# add the ubuntu cloud ring support for juno
+echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
+  "trusty-updates/juno main" > /etc/apt/sources.list.d/cloudarchive-juno.list
+# add the key 
+#https://github.com/dguitarbite/OpenStack-Folsom-VM-SandBox-Guide/issues/5
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
+apt-get update && apt-get -y install ubuntu-cloud-keyring && apt-get dist-upgrade -y
+#install mariadb with password
+# source http://dba.stackexchange.com/questions/35866/install-mariadb-without-password-prompt-in-ubuntu
+#	http://stackoverflow.com/questions/4937792/using-variables-inside-a-bash-heredoc
+export DEBIAN_FRONTEND=noninteractive
+debconf-set-selections -v <<EOF
+mariadb-server-5.5 mysql-server/root_password password $master_pass
+EOF
+debconf-set-selections -v <<EOF
+mariadb-server-5.5 mysql-server/root_password_again password $master_pass
+EOF
+apt-get install mariadb-server python-mysqldb -y
+# modify the configuration files for  maria db
+sed -i.bak s/127.0.0.1/$ip_eth0/g /etc/mysql/my.cnf
+# create  loop to configure all datatbases
+# source http://www.tldp.org/LDP/abs/html/loops1.html
+#	http://www.bluepiccadilly.com/2011/12/creating-mysql-database-and-user-command-line-and-bash-script-automate-process
+for db_and_user_name in "keystone" "glance" "nova" "neutron"
+do
+mysql -uroot -p$master_pass -e "create database if not exists $db_and_user_name;"
+mysql -uroot -p$master_pass -e "GRANT ALL PRIVILEGES ON db_and_user_name.* TO db_and_user_name@$localhost IDENTIFIED BY '$master_pass';"
+mysql -uroot -p$master_pass -e "GRANT ALL PRIVILEGES ON db_and_user_name.* TO db_and_user_name@'%' IDENTIFIED BY '$master_pass';"
+mysql -uroot -p$master_pass -e "FLUSH PRIVILEGES;"
+done
+service mysql restart
+# install rabbit mq
+apt-get install rabbitmq-server -y
+# change guest password
+rabbitmqctl change_password guest $master_pass
+# install the openstack packages - minus nova compute
+apt-get install keystone python-keystoneclient glance python-glanceclient nova-api nova-cert nova-conductor nova-consoleauth nova-novncproxy nova-scheduler python-novaclient sysfsutils neutron-server neutron-plugin-ml2 python-neutronclient neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent -y
+###remove nova sqlite db
+rm /var/lib/nova/nova.sqlite
+###install nova compute
+apt-get install nova-compute -y
+##############starting keystone###############
+# overwrite the keystone config file
+sudo bash -c "cat > /etc/keystone/keystone.conf" <<EOF
+[DEFAULT]
+admin_token=$master_pass
+admin_bind_host=$ip_eth0
+verbose=true
+log_dir=/var/log/keystone
+[assignment]
+[auth]
+[cache]
+[catalog]
+[credential]
+[database]
+connection=mysql://keystone:$master_pass@$host_name/keystone
+[ec2]
+[endpoint_filter]
+[federation]
+[identity]
+[kvs]
+[ldap]
+[matchmaker_ring]
+[memcache]
+[oauth1]
+[os_inherit]
+[paste_deploy]
+[policy]
+[revoke]
+driver = keystone.contrib.revoke.backends.sql.Revoke
+[signing]
+[ssl]
+[stats]
+[token]
+provider=keystone.token.providers.uuid.Provider
+driver=keystone.token.backends.sql.Token
+[trust]
+[extra_headers]
+Distribution = Ubuntu
+EOF
+#
+# populate the keystone database with tables
+su -s /bin/sh -c "keystone-manage db_sync" keystone
+###Restart the Identity service:
+service keystone restart
+##By default, the Ubuntu packages create a SQLite database.
+#Because this configuration uses a SQL database server, you can remove the SQLite database file:
+rm -f /var/lib/keystone/keystone.db
+#By default, the Identity service stores expired tokens in the database indefinitely.
+#The accumulation of expired tokens considerably increases the database size and might degrade service performance,
+#particularly in environments with limited resources.
+#We recommend that you use cron to configure a periodic task that purges expired tokens hourly:
+(crontab -l -u keystone 2>&1 | grep -q token_flush) || \
+  echo '@hourly /usr/bin/keystone-manage token_flush >/var/log/keystone/keystone-tokenflush.log 2>&1' \
+  >> /var/spool/cron/crontabs/keystone
+#####Create tenants, users, and roles
+# use the token and keystone endpoint for initial config as there is no admin user yet
+export OS_SERVICE_TOKEN=$master_pass
+export OS_SERVICE_ENDPOINT=http://$host_name:35357/v2.0
+# create admin tenant
+keystone tenant-create --name admin --description "Admin Tenant"
+# create admin user
+keystone user-create --name admin --pass $master_pass
+#Create the admin role
+keystone role-create --name admin
+#Add the admin role to the admin tenant and user
+keystone user-role-add --user admin --tenant admin --role admin
+#Create the service tenant. This is the tenant under which we have all services
+keystone tenant-create --name service --description "Service Tenant"
+#Create the service entity for the Identity service
+keystone service-create --name keystone --type identity --description "OpenStack Identity"
+#OpenStack provides three API endpoint variations for each service: admin, internal, and public. In a production environment,
+#the variants might reside on separate networks that service different types of users for security reasons. Also, OpenStack
+#supports multiple regions for scalability. For simplicity, this configuration uses the management network for all endpoint
+#variations and the regionOne region.
+#Create the Identity service API endpoints:
+keystone endpoint-create \
+  --service-id $(keystone service-list | awk '/ identity / {print $2}') \
+  --publicurl http://$host_name:5000/v2.0 \
+  --internalurl http://$host_name:5000/v2.0 \
+  --adminurl http://$host_name:35357/v2.0 \
+  --region regionOne
+###now that we have the admin user we do not use the token anymore. some cleanup
+unset OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT
+## run a small test for sanity and log the results in a new file
+keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
+  --os-auth-url http://$host_name:35357/v2.0 token-get >  kesytone_test_results
+keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
+  --os-auth-url http://$host_name:35357/v2.0 tenant-list >> kesytone_test_results
+keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
+  --os-auth-url http://$host_name:35357/v2.0 user-list >> kesytone_test_results
+keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
+  --os-auth-url http://$host_name:35357/v2.0 role-list >> kesytone_test_results
+### from now on we will 'source' the variables for the python clients to have cleaner commands
+cat > admin-openrc.sh <<EOF
+export OS_TENANT_NAME=admin
+export OS_USERNAME=admin
+export OS_PASSWORD=$master_pass
+export OS_AUTH_URL=http://$host_name:35357/v2.0
+EOF
+source admin-openrc.sh
+##############starting glance###############
+# crates the glance user, service, endpoint etc... in the keystone catalogs
+keystone user-create --name glance --pass $mastr_pass
+keystone user-role-add --user glance --tenant service --role admin
+keystone service-create --name glance --type image --description "OpenStack Image Service"
+keystone endpoint-create \
+  --service-id $(keystone service-list | awk '/ image / {print $2}') \
+  --publicurl http://$host_name:9292 \
+  --internalurl http://$host_name:9292 \
+  --adminurl http://$host_name:9292 \
+  --region regionOne
+# overwrite glance config files
+sudo bash -c "cat > /etc/glance/glance-api.conf" <<EOF
+[DEFAULT]
+verbose=True
+bind_host = 0.0.0.0
+bind_port = 9292
+log_file = /var/log/glance/api.log
+backlog = 4096
+workers = 1
+registry_host = 0.0.0.0
+registry_port = 9191
+registry_client_protocol = http
+rabbit_host = localhost
+rabbit_port = 5672
+rabbit_use_ssl = false
+rabbit_userid = guest
+rabbit_password = guest
+rabbit_virtual_host = /
+rabbit_notification_exchange = glance
+rabbit_notification_topic = notifications
+rabbit_durable_queues = False
+qpid_notification_exchange = glance
+qpid_notification_topic = notifications
+qpid_hostname = localhost
+qpid_port = 5672
+qpid_username =
+qpid_password =
+qpid_sasl_mechanisms =
+qpid_reconnect_timeout = 0
+qpid_reconnect_limit = 0
+qpid_reconnect_interval_min = 0
+qpid_reconnect_interval_max = 0
+qpid_reconnect_interval = 0
+qpid_heartbeat = 5
+qpid_protocol = tcp
+qpid_tcp_nodelay = True
+filesystem_store_datadir = /var/lib/glance/images/
+swift_store_auth_version = 2
+swift_store_auth_address = 127.0.0.1:5000/v2.0/
+swift_store_user = jdoe:jdoe
+swift_store_key = a86850deb2742ec3cb41518e26aa2d89
+swift_store_container = glance
+swift_store_create_container_on_put = False
+swift_store_large_object_size = 5120
+swift_store_large_object_chunk_size = 200
+swift_enable_snet = False
+s3_store_host = 127.0.0.1:8080/v1.0/
+s3_store_access_key = <20-char AWS access key>
+s3_store_secret_key = <40-char AWS secret key>
+s3_store_bucket = <lowercased 20-char aws access key>glance
+s3_store_create_bucket_on_put = False
+sheepdog_store_address = localhost
+sheepdog_store_port = 7000
+sheepdog_store_chunk_size = 64
+delayed_delete = False
+scrub_time = 43200
+scrubber_datadir = /var/lib/glance/scrubber
+image_cache_dir = /var/lib/glance/image-cache/
+[database]
+sqlite_db = /var/lib/glance/glance.sqlite
+backend = sqlalchemy
+connection=mysql://glance:$master_pass@$host_name/glance
+[keystone_authtoken]
+auth_uri=http://$host_name:5000/v2.0
+identity_uri=http://$host_name:35357
+admin_tenant_name=service
+admin_user=glance
+admin_password=$master_pass
+[paste_deploy]
+flavor=keystone
+[store_type_location_strategy]
+[glance_store]
+default_store=file
+filesystem_store_datadir=/var/lib/glance/images/
+EOF
+###glance registry
+sudo bash -c "cat > /etc/glance/glance-registry.conf" <<EOF
+[DEFAULT]
+verbose=True
+bind_host = 0.0.0.0
+bind_port = 9191
+log_file = /var/log/glance/registry.log
+backlog = 4096
+api_limit_max = 1000
+limit_param_default = 25
+[database]
+sqlite_db = /var/lib/glance/glance.sqlite
+backend = sqlalchemy
+connection=mysql://glance:$master_pass@$host_name/glance
+[keystone_authtoken]
+auth_uri=http://host_name:5000/v2.0
+identity_uri=http://$host_name:35357
+admin_tenant_name=service
+admin_user=glance
+admin_password=$master_pass
+[paste_deploy]
+flavor=keystone
+EOF
+#Restart the Image Service services:
+service glance-registry restart
+service glance-api restart
+#By default, the Ubuntu packages create an SQLite database.
+#Because this configuration uses a SQL database server, you can remove the SQLite database file:
+rm -f /var/lib/glance/glance.sqlite
+##verification - upload and check cirros and coreos
+glance image-create --name "cirros-0.3.3-x86_64" --disk-format=qcow2 \
+  --container-format=bare --is-public=true \
+  --copy-from http://cdn.download.cirros-cloud.net/0.3.3/cirros-0.3.3-x86_64-disk.img
+wget http://stable.release.core-os.net/amd64-usr/current/coreos_production_openstack_image.img.bz2
+bunzip2 coreos_production_openstack_image.img.bz2
+glance image-create --name CoreOS \
+  --container-format bare \
+  --disk-format qcow2 \
+  --file coreos_production_openstack_image.img \
+  --is-public True
+glance image-list > glance_test_results
+cat cloud-config.yaml << EOF
+#cloud-config
+coreos:
+  etcd:
+    # generate a new token for each unique cluster from https://discovery.etcd.io/new
+    discovery: https://discovery.etcd.io/<token>
+    # multi-region and multi-cloud deployments need to use $public_ipv4
+    addr: $private_ipv4:4001
+    peer-addr: $private_ipv4:7001
+  units:
+    - name: etcd.service
+      command: start
+    - name: fleet.service
+      command: start
+ssh_authorized_keys:
+  # include one or more SSH public keys
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
+EOF
+# remove the downloaded file
+rm -rf coreos_production_openstack_image.img
+########################NOVA################"
+keystone user-create --name nova --pass $master_pass
+keystone user-role-add --user nova --tenant service --role admin
+keystone service-create --name nova --type compute \
+  --description "OpenStack Compute"
+keystone endpoint-create \
+  --service-id $(keystone service-list | awk '/ compute / {print $2}') \
+  --publicurl http://$host_name:8774/v2/%\(tenant_id\)s \
+  --internalurl http://$host_name:8774/v2/%\(tenant_id\)s \
+  --adminurl http://$host_name:8774/v2/%\(tenant_id\)s \
+  --region regionOne
+### overwrite the config files
+sudo bash -c "cat > /etc/nova/nova.conf" <<EOF
+[DEFAULT]
+dhcpbridge_flagfile=/etc/nova/nova.conf
+dhcpbridge=/usr/bin/nova-dhcpbridge
+logdir=/var/log/nova
+state_path=/var/lib/nova
+lock_path=/var/lock/nova
+force_dhcp_release=True
+libvirt_use_virtio_for_bridges=True
+verbose=True
+ec2_private_dns_show_ip=True
+api_paste_config=/etc/nova/api-paste.ini
+enabled_apis=ec2,osapi_compute,metadata
+rpc_backend = rabbit
+rabbit_host = $host_name
+rabbit_password = $master_pass
+auth_strategy = keystone
+my_ip = $ip_eth0
+vncserver_listen = $ip_eth0
+vncserver_proxyclient_address = $ip_eth0
+verbose = True
+network_api_class = nova.network.neutronv2.api.API
+security_group_api = neutron
+linuxnet_interface_driver = nova.network.linux_net.LinuxOVSInterfaceDriver
+firewall_driver = nova.virt.firewall.NoopFirewallDriver
+vnc_enabled = True
+vncserver_listen = 0.0.0.0
+vncserver_proxyclient_address = $ip_eth0
+novncproxy_base_url = http://$host_name:6080/vnc_auto.html
+[database]
+connection = mysql://nova:$master_pass@$host_name/nova
+[keystone_authtoken]
+auth_uri = http://$host_name:5000/v2.0
+identity_uri = http://$host_name:35357
+admin_tenant_name = service
+admin_user = nova
+admin_password = $master_pass
+[glance]
+host = $host_name
+[libvirt]
+virt_type = qemu
+[neutron]
+url = http://$host_name:9696
+auth_strategy = keystone
+admin_auth_url = http://$host_name:35357/v2.0
+admin_tenant_name = service
+admin_username = neutron
+admin_password = $master_pass
+service_metadata_proxy = True
+metadata_proxy_shared_secret = $master_pass
+EOF
+#Populate the Compute database:
+su -s /bin/sh -c "nova-manage db sync" nova
+#Restart the Compute services:
+service nova-api restart
+service nova-cert restart
+service nova-consoleauth restart
+service nova-scheduler restart
+service nova-conductor restart
+service nova-novncproxy restart
+#because this configuration uses a SQL database server, you can remove the SQLite database file:
+rm -f /var/lib/nova/nova.sqlite
+sudo bash -c "cat > /etc/nova/nova-compute.conf" <<EOF
+[DEFAULT]
+compute_driver=libvirt.LibvirtDriver
+[libvirt]
+virt_type=qemu
+EOF
+###verification time
+nova service-list > nova_test_results
+nova image-list >> nova_test_results
+#####################neutron###########################
+keystone user-create --name neutron --pass $master_pass
+keystone user-role-add --user neutron --tenant service --role admin
+keystone service-create --name neutron --type network \
+  --description "OpenStack Networking"
+keystone endpoint-create \
+  --service-id $(keystone service-list | awk '/ network / {print $2}') \
+  --publicurl http://$host_name:9696 \
+  --adminurl http://$host_name:9696 \
+  --internalurl http://$host_name:9696 \
+  --region regionOne
+sudo bash -c "cat > /etc/neutron/neutron.conf <<EOF
+[DEFAULT]
+verbose=True
+lock_path = $state_path/lock
+core_plugin = ml2
+service_plugins = router
+auth_strategy = keystone
+allow_overlapping_ips = True
+notify_nova_on_port_status_changes = True
+notify_nova_on_port_data_changes = True
+nova_url = http://$host_name:8774/v2
+nova_region_name = regionOne
+nova_admin_username = nova
+nova_admin_tenant_id = $(keystone tenant-get service | awk '/id/ {print $4}')
+nova_admin_password = $master_pass
+rabbit_host=$host_name
+rabbit_password=$master_pass
+rpc_backend=rabbit
+[matchmaker_redis]
+[matchmaker_ring]
+[quotas]
+[agent]
+root_helper = sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf
+[keystone_authtoken]
+auth_uri = http://$host_name:5000/v2.0
+identity_uri = http://$host_name:35357
+admin_tenant_name = service
+admin_user = neutron
+admin_password = $master_pass
+[database]
+connection=mysql://neutron:$master_pass@$host_name:3306/neutron
+[service_providers]
+service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
+service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+EOF
+sudo bash -c "cat > /etc/neutron/plugins/ml2/ml2_conf.ini" <<EOF
+[ml2]
+type_drivers = flat,gre
+tenant_network_types = gre
+mechanism_drivers = openvswitch
+[ml2_type_flat]
+flat_networks = external
+[ml2_type_vlan]
+[ml2_type_gre]
+tunnel_id_ranges = 1:1000
+[ml2_type_vxlan]
+[securitygroup]
+enable_security_group = True
+enable_ipset = True
+firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+[ovs]
+local_ip = $ip_eth1
+enable_tunneling = True
+bridge_mappings = external:br-ex
+[agent]
+tunnel_types = gre
+EOF
+su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade juno" neutron
+service nova-api restart
+service nova-scheduler restart
+service nova-conductor restart
+service neutron-server restart
+###testing again
+neutron ext-list > neutron_test_results
+echo "1" > /proc/sys/net/ipv4/ip_forward
+echo "0" > /proc/sys/net/ipv4/conf/all/rp_filter
+echo "0" > /proc/sys/net/ipv4/conf/default/rp_filter
+sysctl -p
+
+sudo bash -c "cat > /etc/neutron/l3_agent.ini" <<EOF
+[DEFAULT]
+verbose = True
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+use_namespaces = True
+external_network_bridge = br-ex
+EOF
+
+sudo bash -c "cat > /etc/neutron/dhcp_agent.ini" <<EOF
+[DEFAULT]
+verbose = True
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
+use_namespaces = True
+dnsmasq_config_file = /etc/neutron/dnsmasq-neutron.conf
+EOF
+sudo bash -c "cat > /etc/neutron/dnsmasq-neutron.conf" <<EOF
+dhcp-option-force=26,1454
+EOF
+pkill dnsmasq
+sudo bash -c "cat > /etc/neutron/metadata_agent.ini" <<EOF
+[DEFAULT]
+verbose = True
+auth_url = http://$host_name:5000/v2.0
+auth_region = RegionOne
+admin_tenant_name = service
+admin_user = neutron
+admin_password = $master_pass
+nova_metadata_ip = $host_name
+metadata_proxy_shared_secret = $master_pass
+EOF
+service nova-api restart
+#OVS section
+service openvswitch-switch restart
+ovs-vsctl add-br br-ex
+ovs-vsctl add-port br-ex eth2
+service neutron-plugin-openvswitch-agent restart
+service neutron-l3-agent restart
+service neutron-dhcp-agent restart
+service neutron-metadata-agent restart
+###testing
+neutron agent-list > neutron_test_results
+
