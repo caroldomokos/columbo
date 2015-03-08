@@ -4,3 +4,4 @@ export mask_eth0=255.255.255.0
 export mask_eth1=255.255.255.0
 export host_name=columbo
 export master_pass=secret
+export dg_eth0=10.0.2.1
