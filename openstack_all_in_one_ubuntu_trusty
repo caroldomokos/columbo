@@ -14,8 +14,8 @@ echo "We start by collecting the necessary data to build the system"
 #ip_address=`ifconfig eth0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
 # get the IP address on eth1
 #ip_address_eth1=`ifconfig eth1 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
-echo "hostname:"
-read host_name
+#echo "hostname:"
+#read host_name
 echo "master password:"
 read master_pass
 echo "eth0 IP address(admin):"
@@ -51,9 +51,9 @@ EOF
 # restart networking
 ifdown --exclude=lo -a && sudo ifup --exclude=lo -a
 # overwrite /etc/hosts with the new value for our hostname and  fixed ip - not pointing to 127.0.0.1
-sudo bash -c "cat > /etc/hosts" <<EOF
-$ip_eth0     $host_name
-EOF
+#sudo bash -c "cat > /etc/hosts" <<EOF
+#$ip_eth0     $host_name
+#EOF
 # overite the /etc/hostname with the new value
 sudo bash -c "cat > /etc/hostname" <<EOF
 $host_name
