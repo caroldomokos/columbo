@@ -7,6 +7,8 @@ unset LANG
 unset LANGUAGE
 LC_ALL=C
 export LC_ALL
+# source the variables
+source base_config.rc
 # set the network file
 ./00network_config
 # set the eth2 separately so that the variable would not be substituted
@@ -16,6 +18,7 @@ export LC_ALL
 # overwrite /etc/hosts with the new value for our hostname and  fixed ip - not pointing to 127.0.0.1
 ./03hosts_file_config
 # overite the /etc/hostname with the new value
+hostname $host_name
 ./04hostname_config
 # create the dns servers of google
 ./05resolvconf_config
