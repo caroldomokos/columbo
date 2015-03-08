@@ -1,0 +1,15 @@
+#!/bin/bash
+source base_config.rc
+sudo bash -c "cat > /etc/network/interfaces" <<EOF
+auto lo
+iface lo inet loopback
+auto eth0
+iface eth0 inet static
+address $ip_eth0
+netmask $mask_eth0
+gateway $dg_eth0
+auto eth1
+iface eth1 inet static
+address $ip_eth1
+netmask $mask_eth1
+EOF

@@ -1,0 +1,5 @@
+#!/bin/bash
+source base_config.rc
+sudo bash -c "cat > /etc/hostname" <<EOF
+$host_name
+EOF

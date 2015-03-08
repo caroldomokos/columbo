@@ -1,0 +1,22 @@
+#!/bin/bash
+# short intro
+# source http://www.cyberciti.biz/tips/linux-unix-pause-command.html
+read -p "This script will install openstack basic components (keystone,nova,neutron,glance) on a single host. Juno, ubuntu trusty, etc To be completed.U need to run it as root/sudo Press enter to continue"
+## good idea stolen from devstack as I get a lot of errors on locale from lxc containers
+unset LANG
+unset LANGUAGE
+LC_ALL=C
+export LC_ALL
+# set the network file
+./base/00network_config
+# set the eth2 separately so that the variable would not be substituted
+./base/01eth2_config
+# restart networking
+./base/02restart_network_config
+# overwrite /etc/hosts with the new value for our hostname and  fixed ip - not pointing to 127.0.0.1
+./base/03host_file_config
+# overite the /etc/hostname with the new value
+./base/04hostname_config
+# create the dns servers of google
+./base/05resolvconf_config
+#let's update the system

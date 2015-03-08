@@ -1,0 +1,5 @@
+#!/bin/bash
+source base_config.rc
+sudo bash -c "cat > /etc/hosts" <<EOF
+$ip_eth0     $host_name
+EOF

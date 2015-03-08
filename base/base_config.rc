@@ -1,0 +1,6 @@
+export ip_eth0=10.0.2.100
+export ip_eth1=192.168.1.100
+export mask_eth0=255.255.255.0
+export mask_eth1=255.255.255.0
+export host_name=columbo
+export master_pass=secret
