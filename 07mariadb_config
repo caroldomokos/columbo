@@ -1,5 +1,9 @@
 #!/bin/bash
 source base_config.rc
+unset LANG
+unset LANGUAGE
+LC_ALL=C
+export LC_ALL
 #install mariadb with password
 # source http://dba.stackexchange.com/questions/35866/install-mariadb-without-password-prompt-in-ubuntu
 #       http://stackoverflow.com/questions/4937792/using-variables-inside-a-bash-heredoc
@@ -18,4 +22,4 @@ sed -i "/\[mysqld\]/a init-connect = 'SET NAMES utf8'" /etc/mysql/my.cnf
 sed -i '/\[mysqld\]/a collation-server = utf8_general_ci' /etc/mysql/my.cnf
 sed -i '/\[mysqld\]/a default-storage-engine = innodb' /etc/mysql/my.cnf
 sed -i '/\[mysqld\]/a innodb_file_per_table' /etc/mysql/my.cnf
-service msql restart
+service mysql restart
