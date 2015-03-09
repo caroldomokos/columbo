@@ -13,4 +13,4 @@ EOF
 apt-get install mariadb-server python-mysqldb -y
 # modify the configuration files for  maria db
 sed -i.bak s/127.0.0.1/$ip_eth0/g /etc/mysql/my.cnf
-
+service msql restart
