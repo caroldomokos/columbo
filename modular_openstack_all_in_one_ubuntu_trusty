@@ -24,3 +24,5 @@ hostname $host_name
 ./05resolvconf_config
 #let's update the system
 ./06apt_config
+#install maria db with root password
+./07mariadb_config

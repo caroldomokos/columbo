@@ -1,0 +1,16 @@
+#!/bin/bash
+source base_config.rc
+#install mariadb with password
+# source http://dba.stackexchange.com/questions/35866/install-mariadb-without-password-prompt-in-ubuntu
+#       http://stackoverflow.com/questions/4937792/using-variables-inside-a-bash-heredoc
+export DEBIAN_FRONTEND=noninteractive
+debconf-set-selections -v <<EOF
+mariadb-server-5.5 mysql-server/root_password password $master_pass
+EOF
+debconf-set-selections -v <<EOF
+mariadb-server-5.5 mysql-server/root_password_again password $master_pass
+EOF
+apt-get install mariadb-server python-mysqldb -y
+# modify the configuration files for  maria db
+sed -i.bak s/127.0.0.1/$ip_eth0/g /etc/mysql/my.cnf
+
