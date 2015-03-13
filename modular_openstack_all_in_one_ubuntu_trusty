@@ -27,6 +27,7 @@ echo "03"
 hostname $host_name
 echo "04"
 ./04hostname_config
+awk '//{print $1}' /etc/hostname
 # create the dns servers of google
 echo "05"
 ./05resolvconf_config
