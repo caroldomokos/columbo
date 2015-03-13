@@ -10,19 +10,29 @@ export LC_ALL
 # source the variables
 source base_config.rc
 # set the network file
+echo "00"
 ./00network_config
 # set the eth2 separately so that the variable would not be substituted
+echo "01"
 ./01eth2_config
 # restart networking
+echo "02"
 ./02restart_network_config
+ifconfig eth0 | awk '/inet addr:/ {print$2}' | sed 's/addr://'
+ifconfig eth1 | awk '/inet addr:/ {print$2}' | sed 's/addr://'
 # overwrite /etc/hosts with the new value for our hostname and  fixed ip - not pointing to 127.0.0.1
+echo "03"
 ./03hosts_file_config
 # overite the /etc/hostname with the new value
 hostname $host_name
+echo "04"
 ./04hostname_config
 # create the dns servers of google
+echo "05"
 ./05resolvconf_config
 #let's update the system
+echo "06"
 ./06apt_config
 #install maria db with root password
+echo "07"
 ./07mariadb_config
