@@ -1,0 +1,6 @@
+#!/bin/bash
+source base_config.rc
+# install rabbitmq
+apt-get install rabbitmq-server -y
+# change guest password
+rabbitmqctl change_password guest $master_pass
