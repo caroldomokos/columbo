@@ -38,3 +38,5 @@ echo "06"
 #install maria db with root password
 echo "07"
 ./07mariadb_config
+echo "08"
+./08rabbitmq_config
