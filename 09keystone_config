@@ -1,0 +1,6 @@
+#!/bin/bash
+#install the packages
+apt-get install keystone python-keystoneclient 
+# remove the Sqlite db
+rm -f /var/lib/keystone/keystone.db
+

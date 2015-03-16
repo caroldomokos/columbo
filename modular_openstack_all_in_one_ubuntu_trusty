@@ -40,3 +40,7 @@ echo "07"
 ./07mariadb_config
 echo "08"
 ./08rabbitmq_config
+#####keystone#####
+##################
+echo "09"
+./09keystone_config
