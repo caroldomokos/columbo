@@ -1,6 +1,93 @@
 #!/bin/bash
+source base_config.rc
 #install the packages
 apt-get install keystone python-keystoneclient 
 # remove the Sqlite db
 rm -f /var/lib/keystone/keystone.db
+# overwrite the keystone config file
+cat > /etc/keystone/keystone.conf <<EOF
+[DEFAULT]
+admin_token=$master_pass
+admin_bind_host=$ip_eth0
+verbose=true
+log_dir=/var/log/keystone
+[assignment]
+[auth]
+[cache]
+[catalog]
+[credential]
+[database]
+connection=mysql://keystone:$master_pass@$host_name/keystone
+[ec2]
+[endpoint_filter]
+[federation]
+[identity]
+[kvs]
+[ldap]
+[matchmaker_ring]
+[memcache]
+[oauth1]
+[os_inherit]
+[paste_deploy]
+[policy]
+[revoke]
+driver = keystone.contrib.revoke.backends.sql.Revoke
+[signing]
+[ssl]
+[stats]
+[token]
+provider=keystone.token.providers.uuid.Provider
+driver=keystone.token.backends.sql.Token
+[trust]
+[extra_headers]
+Distribution = Ubuntu
+EOF
+###populate the databases
+su -s /bin/sh -c "keystone-manage db_sync" keystone
+# restart the service
+service keystone restart
+####create initial admin user and tenants, etc...
+export OS_SERVICE_TOKEN=$master_pass
+export OS_SERVICE_ENDPOINT=http://$host_name:35357/v2.0
+# create admin tenant
+keystone tenant-create --name admin --description "Admin Tenant"
+# create admin user
+keystone user-create --name admin --pass $master_pass
+#Create the admin role
+keystone role-create --name admin
+#Add the admin role to the admin tenant and user
+keystone user-role-add --user admin --tenant admin --role admin
+#Create the service tenant. This is the tenant under which we have all services
+keystone tenant-create --name service --description "Service Tenant"
+#Create the service entity for the Identity service
+keystone service-create --name keystone --type identity --description "OpenStack Identity"
+#OpenStack provides three API endpoint variations for each service: admin, internal, and public. In a production environment,
+#the variants might reside on separate networks that service different types of users for security reasons. Also, OpenStack
+#supports multiple regions for scalability. For simplicity, this configuration uses the management network for all endpoint
+#variations and the regionOne region.
+#Create the Identity service API endpoints:
+keystone endpoint-create \
+  --service-id $(keystone service-list | awk '/ identity / {print $2}') \
+  --publicurl http://$host_name:5000/v2.0 \
+  --internalurl http://$host_name:5000/v2.0 \
+  --adminurl http://$host_name:35357/v2.0 \
+  --region regionOne
+###now that we have the admin user we do not use the token anymore. some cleanup
+unset OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT
+## run a small test for sanity and log the results in a new file
+keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
+  --os-auth-url http://$host_name:35357/v2.0 token-get >  kesytone_test_results
+keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
+  --os-auth-url http://$host_name:35357/v2.0 tenant-list >> kesytone_test_results
+keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
+  --os-auth-url http://$host_name:35357/v2.0 user-list >> kesytone_test_results
+keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
+  --os-auth-url http://$host_name:35357/v2.0 role-list >> kesytone_test_results
+### from now on we will 'source' the variables for the python clients to have cleaner commands
+cat > admin-openrc.sh <<EOF
+export OS_TENANT_NAME=admin
+export OS_USERNAME=admin
+export OS_PASSWORD=$master_pass
+export OS_AUTH_URL=http://$host_name:35357/v2.0
+EOF
 
