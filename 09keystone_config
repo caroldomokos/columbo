@@ -46,6 +46,8 @@ EOF
 su -s /bin/sh -c "keystone-manage db_sync" keystone
 # restart the service
 service keystone restart
+# wait 1 sec for keystone to become available
+sleep 1
 ####create initial admin user and tenants, etc...
 export OS_SERVICE_TOKEN=$master_pass
 export OS_SERVICE_ENDPOINT=http://$host_name:35357/v2.0
@@ -90,4 +92,3 @@ export OS_USERNAME=admin
 export OS_PASSWORD=$master_pass
 export OS_AUTH_URL=http://$host_name:35357/v2.0
 EOF
-
