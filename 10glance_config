@@ -111,6 +111,8 @@ admin_password=$master_pass
 [paste_deploy]
 flavor=keystone
 EOF
+# create the tables
+su -s /bin/sh -c "glance-manage db_sync" glance
 #Restart the Image Service services:
 service glance-registry restart
 service glance-api restart
