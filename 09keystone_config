@@ -1,7 +1,7 @@
 #!/bin/bash
 source base_config.rc
 #install the packages
-apt-get install keystone python-keystoneclient 
+apt-get install keystone python-keystoneclient -y
 # remove the Sqlite db
 rm -f /var/lib/keystone/keystone.db
 # overwrite the keystone config file
