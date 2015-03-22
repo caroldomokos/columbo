@@ -44,3 +44,5 @@ echo "08"
 ##################
 echo "09"
 ./09keystone_config
+echo "10"
+./10glance_config
