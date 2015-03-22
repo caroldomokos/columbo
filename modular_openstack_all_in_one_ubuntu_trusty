@@ -46,3 +46,5 @@ echo "09"
 ./09keystone_config
 echo "10"
 ./10glance_config
+echo "11"
+./11nova_config

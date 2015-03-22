@@ -1,0 +1,92 @@
+#!/bin/bash
+# setup keystone
+source admin-openrc.sh
+source base_config.rc
+keystone user-create --name nova --pass $master_pass
+keystone user-role-add --user nova --tenant service --role admin
+keystone service-create --name nova --type compute \
+  --description "OpenStack Compute"
+keystone endpoint-create \
+  --service-id $(keystone service-list | awk '/ compute / {print $2}') \
+  --publicurl http://$host_name:8774/v2/%\(tenant_id\)s \
+  --internalurl http://$host_name:8774/v2/%\(tenant_id\)s \
+  --adminurl http://$host_name:8774/v2/%\(tenant_id\)s \
+  --region regionOne
+## install the nova controller packages only
+apt-get install nova-api nova-cert nova-conductor nova-consoleauth \
+  nova-novncproxy nova-scheduler python-novaclient -y
+### overwrite the config files
+cat > /etc/nova/nova.conf <<EOF
+[DEFAULT]
+dhcpbridge_flagfile=/etc/nova/nova.conf
+dhcpbridge=/usr/bin/nova-dhcpbridge
+logdir=/var/log/nova
+state_path=/var/lib/nova
+lock_path=/var/lock/nova
+force_dhcp_release=True
+libvirt_use_virtio_for_bridges=True
+verbose=True
+ec2_private_dns_show_ip=True
+api_paste_config=/etc/nova/api-paste.ini
+enabled_apis=ec2,osapi_compute,metadata
+rpc_backend = rabbit
+rabbit_host = $host_name
+rabbit_password = $master_pass
+auth_strategy = keystone
+my_ip = $ip_eth0
+vncserver_listen = $ip_eth0
+vncserver_proxyclient_address = $ip_eth0
+verbose = True
+network_api_class = nova.network.neutronv2.api.API
+security_group_api = neutron
+linuxnet_interface_driver = nova.network.linux_net.LinuxOVSInterfaceDriver
+firewall_driver = nova.virt.firewall.NoopFirewallDriver
+vnc_enabled = True
+vncserver_listen = 0.0.0.0
+vncserver_proxyclient_address = $ip_eth0
+novncproxy_base_url = http://$host_name:6080/vnc_auto.html
+[database]
+connection = mysql://nova:$master_pass@$host_name/nova
+[keystone_authtoken]
+auth_uri = http://$host_name:5000/v2.0
+identity_uri = http://$host_name:35357
+admin_tenant_name = service
+admin_user = nova
+admin_password = $master_pass
+[glance]
+host = $host_name
+[libvirt]
+virt_type = qemu
+[neutron]
+url = http://$host_name:9696
+auth_strategy = keystone
+admin_auth_url = http://$host_name:35357/v2.0
+admin_tenant_name = service
+admin_username = neutron
+admin_password = $master_pass
+service_metadata_proxy = True
+metadata_proxy_shared_secret = $master_pass
+EOF
+#Populate the Compute database:
+su -s /bin/sh -c "nova-manage db sync" nova
+#Restart the Compute services:
+service nova-api restart
+service nova-cert restart
+service nova-consoleauth restart
+service nova-scheduler restart
+service nova-conductor restart
+service nova-novncproxy restart
+#because this configuration uses a SQL database server, you can remove the SQLite database file:
+rm -f /var/lib/nova/nova.sqlite
+udo bash -c "cat > /etc/nova/nova-compute.conf" <<EOF
+[DEFAULT]
+compute_driver=libvirt.LibvirtDriver
+[libvirt]
+virt_type=qemu
+EOF
+###install the nova compute packages
+apt-get install nova-compute sysfsutils -y
+service nova-compute restart
+sleep 1
+echo nova service list > nova_test_results
+nova service-list >> nova_test_results
