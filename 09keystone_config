@@ -46,11 +46,11 @@ EOF
 su -s /bin/sh -c "keystone-manage db_sync" keystone
 # restart the service
 service keystone restart
-# wait 1 sec for keystone to become available
-sleep 1
 ####create initial admin user and tenants, etc...
 export OS_SERVICE_TOKEN=$master_pass
 export OS_SERVICE_ENDPOINT=http://$host_name:35357/v2.0
+# wait 1 sec for keystone to become available
+sleep 1
 # create admin tenant
 keystone tenant-create --name admin --description "Admin Tenant"
 # create admin user
@@ -77,12 +77,16 @@ keystone endpoint-create \
 ###now that we have the admin user we do not use the token anymore. some cleanup
 unset OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT
 ## run a small test for sanity and log the results in a new file
+echo token  get results > kesytone_test_results
 keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
-  --os-auth-url http://$host_name:35357/v2.0 token-get >  kesytone_test_results
+  --os-auth-url http://$host_name:35357/v2.0 token-get >>  kesytone_test_results
+echo tenant list >> kesytone_test_results
 keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
   --os-auth-url http://$host_name:35357/v2.0 tenant-list >> kesytone_test_results
+echo user list >> kesytone_test_results
 keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
   --os-auth-url http://$host_name:35357/v2.0 user-list >> kesytone_test_results
+echo role list >> kesytone_test_results
 keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
   --os-auth-url http://$host_name:35357/v2.0 role-list >> kesytone_test_results
 ### from now on we will 'source' the variables for the python clients to have cleaner commands
