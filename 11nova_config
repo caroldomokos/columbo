@@ -78,14 +78,14 @@ service nova-conductor restart
 service nova-novncproxy restart
 #because this configuration uses a SQL database server, you can remove the SQLite database file:
 rm -f /var/lib/nova/nova.sqlite
-udo bash -c "cat > /etc/nova/nova-compute.conf" <<EOF
-[DEFAULT]
-compute_driver=libvirt.LibvirtDriver
-[libvirt]
-virt_type=qemu
-EOF
+#cat > /etc/nova/nova-compute.conf <<EOF
+#[DEFAULT]
+#compute_driver=libvirt.LibvirtDriver
+#[libvirt]
+#virt_type=qemu
+#EOF
 ###install the nova compute packages
-apt-get install nova-compute sysfsutils -y
+#apt-get install nova-compute sysfsutils -y
 service nova-compute restart
 sleep 1
 echo nova service list > nova_test_results
