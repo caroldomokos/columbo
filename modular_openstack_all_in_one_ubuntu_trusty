@@ -48,3 +48,5 @@ echo "10"
 ./10glance_config
 echo "11"
 ./11nova_config
+echo "12"
+./12neutron_config
