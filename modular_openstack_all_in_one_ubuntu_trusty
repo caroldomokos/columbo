@@ -13,7 +13,7 @@ source base_config.rc
 echo "updating the system"
 apt-get update && apt-get upgrade -y
 echo "installing lxc and creating the first ubuntu trusty container"
-apt-get install lxc lxcctl -y
+apt-get install lxc lxctl -y
 lxc-create --name base_box -t ubuntu
 lxc-clone base_box database
 echo "00"
