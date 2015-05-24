@@ -11,7 +11,7 @@ export LC_ALL
 source base_config.rc
 # set the network file
 echo "updating the system"
-apt-get update && apt-get upgrade -y
+apt-get update 
 echo "installing lxc and creating the first ubuntu trusty container"
 apt-get install lxc lxctl -y
 lxc-create --name base_box -t ubuntu
