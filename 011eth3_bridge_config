@@ -1,0 +1,17 @@
+#!/bin/bash
+source base_config.rc
+cat >> /etc/network/interfaces <<'EOF'
+auto eth3
+iface eth3 inet static
+address $ip_eth3
+netmask $mask_eth3
+auto admin_bridge
+iface admin_bridge inet static
+address $ip_eth0
+netmask $mask_eth0
+gateway $dg_eth0
+bridge_ports eth0
+bridge_stp off
+bridge_fd 2
+bridge_maxwait 20
+EOF
