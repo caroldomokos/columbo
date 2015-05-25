@@ -21,6 +21,8 @@ echo "00"
 # set the eth2 separately so that the variable would not be substituted
 echo "01"
 ./01eth2_config
+echo "011"
+./011eth3_bridge_config
 # restart networking
 echo "02"
 ./02restart_network_config
@@ -28,11 +30,11 @@ ifconfig eth0 | awk '/inet addr:/ {print$2}' | sed 's/addr://'
 ifconfig eth1 | awk '/inet addr:/ {print$2}' | sed 's/addr://'
 # overwrite /etc/hosts with the new value for our hostname and  fixed ip - not pointing to 127.0.0.1
 echo "03"
-./03hosts_file_config
+#./03hosts_file_config
 # overite the /etc/hostname with the new value
-hostname $host_name
-echo "04"
-./04hostname_config
+#hostname $host_name
+#echo "04"
+#./04hostname_config
 awk '//{print $1}' /etc/hostname
 echo $HOSTNAME
 # create the dns servers of google
