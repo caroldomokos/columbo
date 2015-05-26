@@ -11,7 +11,13 @@ export LC_ALL
 source base_config.rc
 # set the network file
 echo "updating the system"
-apt-get update 
+# add the ubuntu cloud ring support for juno
+echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
+  "trusty-updates/juno main" > /etc/apt/sources.list.d/cloudarchive-juno.list
+# add the key 
+#https://github.com/dguitarbite/OpenStack-Folsom-VM-SandBox-Guide/issues/5
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
+apt-get update && apt-get install ubuntu-cloud-keyring -y 
 echo "installing lxc and creating the first ubuntu trusty container"
 apt-get install lxc lxctl -y
 lxc-create --name base_box -t ubuntu
@@ -41,8 +47,8 @@ echo $HOSTNAME
 echo "05"
 ./05resolvconf_config
 #let's update the system
-echo "06"
-./06apt_config
+#echo "06"
+#./06apt_config
 #install maria db with root password
 echo "07"
 ./07mariadb_config
