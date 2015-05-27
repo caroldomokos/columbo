@@ -1,6 +1,6 @@
 #!/bin/bash
 source base_config.rc
-cat >> /etc/network/interfaces <<'EOF'
+cat >> /etc/network/interfaces <<EOF
 auto eth3
 iface eth3 inet static
 address $ip_eth3
