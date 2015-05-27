@@ -3,13 +3,12 @@
 # source http://www.cyberciti.biz/tips/linux-unix-pause-command.html
 read -p "This script will install openstack basic components (keystone,nova,neutron,glance) on a single host. Juno, ubuntu trusty, etc To be completed.U need to run it as root/sudo Press enter to continue"
 ## good idea stolen from devstack as I get a lot of errors on locale from lxc containers
-unset LANG
-unset LANGUAGE
-LC_ALL=C
-export LC_ALL
+#unset LANG
+#unset LANGUAGE
+#LC_ALL=C
+#export LC_ALL
 # source the variables
 source base_config.rc
-# set the network file
 echo "updating the system"
 # add the ubuntu cloud ring support for juno
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
@@ -20,8 +19,8 @@ apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
 apt-get update && apt-get install ubuntu-cloud-keyring -y 
 echo "installing lxc and creating the first ubuntu trusty container"
 apt-get install lxc lxctl -y
-lxc-create --name base_box -t ubuntu
-lxc-clone base_box database
+lxc-create -t download -n trusty -- --dist ubuntu --release trusty --arch amd64
+lxc-clone trusty database
 echo "00"
 ./00network_config
 # set the eth2 separately so that the variable would not be substituted
