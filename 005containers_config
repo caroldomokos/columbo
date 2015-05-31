@@ -21,6 +21,9 @@ lxc.network.ipv4 = $databse_ip
 lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/database/rootfs
 lxc.utsname = database
+lxc.start.auto = 1
+lxc.start.delay = 5
+lxc.start.order = 100
 EOF
 #rabbit
 cat > /var/lib/lxc/rabbit/config <<EOF
@@ -34,6 +37,9 @@ lxc.network.ipv4 = $rabbit_ip
 lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/rabbit/rootfs
 lxc.utsname = rabbit
+lxc.start.auto = 1
+lxc.start.delay = 5
+lxc.start.order = 99
 EOF
 #keystone
 cat > /var/lib/lxc/keystone/config <<EOF
@@ -47,6 +53,9 @@ lxc.network.ipv4 = $keystone_ip
 lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/keystone/rootfs
 lxc.utsname = keystone
+lxc.start.auto = 1
+lxc.start.delay = 5
+lxc.start.order = 98
 EOF
 #glance
 cat > /var/lib/lxc/glance/config <<EOF
@@ -60,6 +69,9 @@ lxc.network.ipv4 = $glance_ip
 lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/glance/rootfs
 lxc.utsname = glance
+lxc.start.auto = 1
+lxc.start.delay = 5
+lxc.start.order = 97
 EOF
 #nova
 cat > /var/lib/lxc/nova/config <<EOF
@@ -73,6 +85,9 @@ lxc.network.ipv4 = $nova_ip
 lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/nova/rootfs
 lxc.utsname = nova
+lxc.start.auto = 1
+lxc.start.delay = 5
+lxc.start.order = 96
 EOF
 #neutron
 cat > /var/lib/lxc/neutron/config <<EOF
@@ -86,6 +101,9 @@ lxc.network.ipv4 = $neutron_ip
 lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/neutron/rootfs
 lxc.utsname = neutron
+lxc.start.auto = 1
+lxc.start.delay = 5
+lxc.start.order = 95
 EOF
 echo "copying the relevant config files into rootfs and executing"
 for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
