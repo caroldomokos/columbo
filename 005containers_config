@@ -1,0 +1,98 @@
+#!/bin/bash
+source base_config.rc
+echo "installing lxc and creating the first ubuntu trusty container"
+apt-get install lxc lxctl -y
+lxc-create -t download -n trusty -- --dist ubuntu --release trusty --arch amd64
+echo "cloning the openstack containers"
+for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
+do
+lxc-clone trusty  $container_name
+done
+echo "creating the lxc config files for each container"
+#database
+cat > /var/lib/lxc/database/config <<EOF
+lxc.include = /usr/share/lxc/config/ubuntu.common.conf
+lxc.arch = x86_64
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = admin_bridge
+lxc.network.hwaddr = 00:00:00:00:00:01
+lxc.network.ipv4 = $databse_ip
+lxc.network.ipv4.gateway = $admin_gateway_ip
+lxc.rootfs = /var/lib/lxc/database/rootfs
+lxc.utsname = database
+EOF
+#rabbit
+cat > /var/lib/lxc/rabbit/config <<EOF
+lxc.include = /usr/share/lxc/config/ubuntu.common.conf
+lxc.arch = x86_64
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = admin_bridge
+lxc.network.hwaddr = 00:00:00:00:00:02
+lxc.network.ipv4 = $rabbit_ip
+lxc.network.ipv4.gateway = $admin_gateway_ip
+lxc.rootfs = /var/lib/lxc/rabbit/rootfs
+lxc.utsname = rabbit
+EOF
+#keystone
+cat > /var/lib/lxc/keystone/config <<EOF
+lxc.include = /usr/share/lxc/config/ubuntu.common.conf
+lxc.arch = x86_64
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = admin_bridge
+lxc.network.hwaddr = 00:00:00:00:00:03
+lxc.network.ipv4 = $keystone_ip
+lxc.network.ipv4.gateway = $admin_gateway_ip
+lxc.rootfs = /var/lib/lxc/keystone/rootfs
+lxc.utsname = keystone
+EOF
+#glance
+cat > /var/lib/lxc/glance/config <<EOF
+lxc.include = /usr/share/lxc/config/ubuntu.common.conf
+lxc.arch = x86_64
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = admin_bridge
+lxc.network.hwaddr = 00:00:00:00:00:04
+lxc.network.ipv4 = $glance_ip
+lxc.network.ipv4.gateway = $admin_gateway_ip
+lxc.rootfs = /var/lib/lxc/glance/rootfs
+lxc.utsname = glance
+EOF
+#nova
+cat > /var/lib/lxc/nova/config <<EOF
+lxc.include = /usr/share/lxc/config/ubuntu.common.conf
+lxc.arch = x86_64
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = admin_bridge
+lxc.network.hwaddr = 00:00:00:00:00:05
+lxc.network.ipv4 = $nova_ip
+lxc.network.ipv4.gateway = $admin_gateway_ip
+lxc.rootfs = /var/lib/lxc/nova/rootfs
+lxc.utsname = nova
+EOF
+#neutron
+cat > /var/lib/lxc/neutron/config <<EOF
+lxc.include = /usr/share/lxc/config/ubuntu.common.conf
+lxc.arch = x86_64
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = admin_bridge
+lxc.network.hwaddr = 00:00:00:00:00:06
+lxc.network.ipv4 = $neutron_ip
+lxc.network.ipv4.gateway = $admin_gateway_ip
+lxc.rootfs = /var/lib/lxc/neutron/rootfs
+lxc.utsname = neutron
+EOF
+echo "copying the relevant config files into rootfs and executing"
+for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
+do
+cp 07mariadb_config /var/lib/lxc/$container_name/rootfs/opt/
+cp base_config.rc /var/lib/lxc/$container_name/rootfs/opt/
+lxc-attach -n $container_name -- chmod +x /opt/07mariadb_config
+lxc-attach -n $container_name -- /opt/07mariadb_config
+done
+
