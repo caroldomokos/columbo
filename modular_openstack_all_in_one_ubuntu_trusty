@@ -21,6 +21,8 @@ echo "installing lxc and creating the first ubuntu trusty container"
 apt-get install lxc lxctl -y
 lxc-create -t download -n trusty -- --dist ubuntu --release trusty --arch amd64
 lxc-clone trusty database
+echo "005"
+./005containers_config
 echo "00"
 ./00network_config
 # set the eth2 separately so that the variable would not be substituted
@@ -50,16 +52,22 @@ echo "05"
 #./06apt_config
 #install maria db with root password
 echo "07"
-./07mariadb_config
+lxc-attach -n database -- chmod +x /opt/07mariadb_config
+lxc-attach -n database -- /opt/07mariadb_config
 echo "08"
-./08rabbitmq_config
+lxc-attach -n rabbit -- chmod +x /opt/08rabbitmq_config
+lxc-attach -n rabbit -- /opt/08rabbitmq_config
 #####keystone#####
 ##################
 echo "09"
-./09keystone_config
+lxc-attach -n keystone -- chmod +x /opt/09keystone_config
+lxc-attach -n keystone -- /opt/09keystone_config
 echo "10"
-./10glance_config
+lxc-attach -n glance -- chmod +x /opt/10glance_config
+lxc-attach -n glance -- /opt/10glance_config
 echo "11"
-./11nova_config
+lxc-attach -n nova -- chmod +x /opt/11nova_config
+lxc-attach -n nova -- /opt/11nova_config
 echo "12"
-./12neutron_config
+lxc-attach -n neutron -- chmod +x /opt/12neutron_config
+lxc-attach -n neutron -- /opt/12neutron_config

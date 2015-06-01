@@ -105,12 +105,9 @@ lxc.start.auto = 1
 lxc.start.delay = 5
 lxc.start.order = 95
 EOF
-echo "copying the relevant config files into rootfs and executing"
+echo "copying the relevant config files into rootfs"
 for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
 do
-cp 07mariadb_config /var/lib/lxc/$container_name/rootfs/opt/
-cp base_config.rc /var/lib/lxc/$container_name/rootfs/opt/
-lxc-attach -n $container_name -- chmod +x /opt/07mariadb_config
-lxc-attach -n $container_name -- /opt/07mariadb_config
+cp *config* /var/lib/lxc/$container_name/rootfs/opt/
 done
 
