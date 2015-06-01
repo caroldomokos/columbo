@@ -7,6 +7,7 @@ echo "cloning the openstack containers"
 for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
 do
 lxc-clone trusty  $container_name
+lxc-start -n $container_name -d
 done
 echo "creating the lxc config files for each container"
 #database
