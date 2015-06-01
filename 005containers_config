@@ -109,6 +109,7 @@ echo "copying the relevant config files into rootfs"
 for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
 do
 cp *config* /var/lib/lxc/$container_name/rootfs/opt/
+cp admin-openrc.sh /var/lib/lxc/$container_name/rootfs/opt/ 
 lxc-start -n $container_name -d
 lxc-stop -n $container_name
 lxc-start -n $container_name -d

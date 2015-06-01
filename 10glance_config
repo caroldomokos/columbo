@@ -1,6 +1,6 @@
 #!/bin/bash
-source base_config.rc
-source admin-openrc.sh
+source /opt/base_config.rc
+source /opt/admin-openrc.sh
 # create the glance user, service, endpoint etc... in the keystone catalogs
 keystone user-create --name glance --pass $master_pass
 keystone user-role-add --user glance --tenant service --role admin

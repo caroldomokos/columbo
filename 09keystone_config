@@ -1,5 +1,5 @@
 #!/bin/bash
-source base_config.rc
+source /opt/base_config.rc
 #install the packages
 apt-get install keystone python-keystoneclient -y
 # remove the Sqlite db
