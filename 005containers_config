@@ -110,5 +110,7 @@ for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
 do
 cp *config* /var/lib/lxc/$container_name/rootfs/opt/
 lxc-start -n $container_name -d
+lxc-stop -n $container_name
+lxc-start -n $container_name -d
 done
 
