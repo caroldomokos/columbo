@@ -2,4 +2,4 @@
 cat > /etc/resolvconf/resolv.conf.d/base <<EOF
 nameserver 8.8.8.8
 EOF
-
+service resolvconf restart

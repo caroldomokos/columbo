@@ -52,22 +52,28 @@ echo "05"
 #./06apt_config
 #install maria db with root password
 echo "07"
-lxc-attach -n database -- chmod +x /opt/07mariadb_config
+lxc-attach -n database -- /opt/05resolvconf_config
+lxc-attach -n database --  service resolvconf restart
 lxc-attach -n database -- /opt/07mariadb_config
 echo "08"
-lxc-attach -n rabbit -- chmod +x /opt/08rabbitmq_config
+lxc-attach -n rabbit -- /opt/05resolvconf_config
+lxc-attach -n rabbit --  service resolvconf restart
 lxc-attach -n rabbit -- /opt/08rabbitmq_config
 #####keystone#####
 ##################
 echo "09"
-lxc-attach -n keystone -- chmod +x /opt/09keystone_config
+lxc-attach -n keystone -- /opt/05resolvconf_config
+lxc-attach -n keystone --  service resolvconf restart
 lxc-attach -n keystone -- /opt/09keystone_config
 echo "10"
-lxc-attach -n glance -- chmod +x /opt/10glance_config
+lxc-attach -n glance -- /opt/05resolvconf_config
+lxc-attach -n glance --  service resolvconf restart
 lxc-attach -n glance -- /opt/10glance_config
 echo "11"
-lxc-attach -n nova -- chmod +x /opt/11nova_config
+lxc-attach -n nova -- /opt/05resolvconf_config
+lxc-attach -n nova --  service resolvconf restart
 lxc-attach -n nova -- /opt/11nova_config
 echo "12"
-lxc-attach -n neutron -- chmod +x /opt/12neutron_config
+lxc-attach -n neutron -- /opt/05resolvconf_config
+lxc-attach -n neutron --  service resolvconf restart
 lxc-attach -n neutron -- /opt/12neutron_config
