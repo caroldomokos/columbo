@@ -90,9 +90,3 @@ echo role list >> kesytone_test_results
 keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
   --os-auth-url http://$host_name:35357/v2.0 role-list >> kesytone_test_results
 ### from now on we will 'source' the variables for the python clients to have cleaner commands
-cat > admin-openrc.sh <<EOF
-export OS_TENANT_NAME=admin
-export OS_USERNAME=admin
-export OS_PASSWORD=$master_pass
-export OS_AUTH_URL=http://$host_name:35357/v2.0
-EOF

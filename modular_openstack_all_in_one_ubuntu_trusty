@@ -51,6 +51,13 @@ echo "05"
 #echo "06"
 #./06apt_config
 #install maria db with root password
+echo "creating the admin credentials"
+cat > admin-openrc.sh <<EOF
+export OS_TENANT_NAME=admin
+export OS_USERNAME=admin
+export OS_PASSWORD=$master_pass
+export OS_AUTH_URL=http://$keystone_ip:35357/v2.0
+EOF
 echo "07"
 lxc-attach -n database -- /opt/05resolvconf_config
 lxc-attach -n database --  service resolvconf restart
