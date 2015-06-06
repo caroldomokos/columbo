@@ -7,9 +7,9 @@ keystone user-role-add --user glance --tenant service --role admin
 keystone service-create --name glance --type image --description "OpenStack Image Service"
 keystone endpoint-create \
   --service-id $(keystone service-list | awk '/ image / {print $2}') \
-  --publicurl http://$host_name:9292 \
-  --internalurl http://$host_name:9292 \
-  --adminurl http://$host_name:9292 \
+  --publicurl http://$glance_ip:9292 \
+  --internalurl http://$glance_ip:9292 \
+  --adminurl http://$glance_ip:9292 \
   --region regionOne
 # install the packages
 # add the ubuntu cloud ring support for juno
@@ -81,10 +81,10 @@ image_cache_dir = /var/lib/glance/image-cache/
 [database]
 sqlite_db = /var/lib/glance/glance.sqlite
 backend = sqlalchemy
-connection=mysql://glance:$master_pass@$host_name/glance
+connection=mysql://glance:$master_pass@$database_ip/glance
 [keystone_authtoken]
-auth_uri=http://$host_name:5000/v2.0
-identity_uri=http://$host_name:35357
+auth_uri=http://$keystone_ip:5000/v2.0
+identity_uri=http://$keystone_ip:35357
 admin_tenant_name=service
 admin_user=glance
 admin_password=$master_pass
@@ -108,10 +108,10 @@ limit_param_default = 25
 [database]
 sqlite_db = /var/lib/glance/glance.sqlite
 backend = sqlalchemy
-connection=mysql://glance:$master_pass@$host_name/glance
+connection=mysql://glance:$master_pass@$database_ip/glance
 [keystone_authtoken]
-auth_uri=http://host_name:5000/v2.0
-identity_uri=http://$host_name:35357
+auth_uri=http://$keystone_ip:5000/v2.0
+identity_uri=http://$keystone_ip:35357
 admin_tenant_name=service
 admin_user=glance
 admin_password=$master_pass
@@ -126,41 +126,12 @@ service glance-api restart
 #By default, the Ubuntu packages create an SQLite database.
 #Because this configuration uses a SQL database server, you can remove the SQLite database file:
 rm -f /var/lib/glance/glance.sqlite
-##verification - upload and check cirros and coreos
-# download coreos
-wget http://stable.release.core-os.net/amd64-usr/current/coreos_production_openstack_image.img.bz2
-bunzip2 coreos_production_openstack_image.img.bz2
+##verification - upload and check cirros 
 glance image-create --name "cirros-0.3.3-x86_64" --disk-format=qcow2 \
   --container-format=bare --is-public=true \
   --copy-from http://cdn.download.cirros-cloud.net/0.3.3/cirros-0.3.3-x86_64-disk.img
-glance image-create --name CoreOS \
-  --container-format bare \
-  --disk-format qcow2 \
-  --file coreos_production_openstack_image.img \
-  --is-public True
 echo glance images list > glance_test_results
 glance image-list >> glance_test_results
-# core os cloud config - wip
-cat cloud-config.yaml << EOF
-#cloud-config
-coreos:
-  etcd:
-    # generate a new token for each unique cluster from https://discovery.etcd.io/new
-    discovery: https://discovery.etcd.io/<token>
-    # multi-region and multi-cloud deployments need to use $public_ipv4
-    addr: $private_ipv4:4001
-    peer-addr: $private_ipv4:7001
-  units:
-    - name: etcd.service
-      command: start
-    - name: fleet.service
-      command: start
-ssh_authorized_keys:
-  # include one or more SSH public keys
-  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
-EOF
-# remove the downloaded file
-rm -rf coreos_production_openstack_image.img
 
 
 
