@@ -13,8 +13,15 @@ keystone endpoint-create \
   --adminurl http://$host_name:8774/v2/%\(tenant_id\)s \
   --region regionOne
 ## install the nova controller packages only
+# add the ubuntu cloud ring support for juno
+echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
+  "trusty-updates/juno main" > /etc/apt/sources.list.d/cloudarchive-juno.list
+# add the key 
+#https://github.com/dguitarbite/OpenStack-Folsom-VM-SandBox-Guide/issues/5
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
+apt-get update && apt-get install ubuntu-cloud-keyring -y 
 apt-get install nova-api nova-cert nova-conductor nova-consoleauth \
-  nova-novncproxy nova-scheduler python-novaclient -y
+  nova-novncproxy nova-scheduler python-novaclient python-mysqldb -y
 ### overwrite the config files
 cat > /etc/nova/nova.conf <<EOF
 [DEFAULT]

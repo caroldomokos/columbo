@@ -13,7 +13,15 @@ keystone endpoint-create \
   --internalurl http://$host_name:9696 \
   --region regionOne
 # install the packages
-apt-get install neutron-server neutron-plugin-ml2 python-neutronclient neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent -y
+# add the ubuntu cloud ring support for juno
+echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
+  "trusty-updates/juno main" > /etc/apt/sources.list.d/cloudarchive-juno.list
+# add the key 
+#https://github.com/dguitarbite/OpenStack-Folsom-VM-SandBox-Guide/issues/5
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
+apt-get update && apt-get install ubuntu-cloud-keyring -y 
+apt-get install neutron-server neutron-plugin-ml2 python-neutronclient \
+	neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent python-mysqldb -y
 cat > /etc/neutron/neutron.conf <<EOF
 [DEFAULT]
 verbose=True
