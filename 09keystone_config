@@ -96,3 +96,39 @@ keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
 echo role list >> kesytone_test_results
 keystone --os-tenant-name admin --os-username admin --os-password $master_pass \
   --os-auth-url http://$keystone_ip:35357/v2.0 role-list >> kesytone_test_results
+export OS_TENANT_NAME=admin
+export OS_USERNAME=admin
+export OS_PASSWORD=$master_pass
+export OS_AUTH_URL=http://$keystone_ip:35357/v2.0
+# create the glance user, service, endpoint etc... in the keystone catalogs
+keystone user-create --name glance --pass $master_pass
+keystone user-role-add --user glance --tenant service --role admin
+keystone service-create --name glance --type image --description "OpenStack Image Service"
+keystone endpoint-create \
+  --service-id $(keystone service-list | awk '/ image / {print $2}') \
+  --publicurl http://$glance_ip:9292 \
+  --internalurl http://$glance_ip:9292 \
+  --adminurl http://$glance_ip:9292 \
+  --region regionOne
+# keystone nova commands
+keystone user-create --name nova --pass $master_pass
+keystone user-role-add --user nova --tenant service --role admin
+keystone service-create --name nova --type compute \
+  --description "OpenStack Compute"
+keystone endpoint-create \
+  --service-id $(keystone service-list | awk '/ compute / {print $2}') \
+  --publicurl http://$host_name:8774/v2/%\(tenant_id\)s \
+  --internalurl http://$host_name:8774/v2/%\(tenant_id\)s \
+  --adminurl http://$host_name:8774/v2/%\(tenant_id\)s \
+  --region regionOne
+#keystone neutron commands
+keystone user-create --name neutron --pass $master_pass
+keystone user-role-add --user neutron --tenant service --role admin
+keystone service-create --name neutron --type network \
+  --description "OpenStack Networking"
+keystone endpoint-create \
+  --service-id $(keystone service-list | awk '/ network / {print $2}') \
+  --publicurl http://$host_name:9696 \
+  --adminurl http://$host_name:9696 \
+  --internalurl http://$host_name:9696 \
+  --region regionOne

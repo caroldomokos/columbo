@@ -2,16 +2,6 @@
 # setup keystone
 source /opt/admin-openrc.sh
 source /opt/base_config.rc
-keystone user-create --name nova --pass $master_pass
-keystone user-role-add --user nova --tenant service --role admin
-keystone service-create --name nova --type compute \
-  --description "OpenStack Compute"
-keystone endpoint-create \
-  --service-id $(keystone service-list | awk '/ compute / {print $2}') \
-  --publicurl http://$host_name:8774/v2/%\(tenant_id\)s \
-  --internalurl http://$host_name:8774/v2/%\(tenant_id\)s \
-  --adminurl http://$host_name:8774/v2/%\(tenant_id\)s \
-  --region regionOne
 ## install the nova controller packages only
 # add the ubuntu cloud ring support for juno
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \

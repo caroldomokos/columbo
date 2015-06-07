@@ -2,16 +2,6 @@
 # setup keystone
 source /opt/admin-openrc.sh
 source /opt/base_config.rc
-keystone user-create --name neutron --pass $master_pass
-keystone user-role-add --user neutron --tenant service --role admin
-keystone service-create --name neutron --type network \
-  --description "OpenStack Networking"
-keystone endpoint-create \
-  --service-id $(keystone service-list | awk '/ network / {print $2}') \
-  --publicurl http://$host_name:9696 \
-  --adminurl http://$host_name:9696 \
-  --internalurl http://$host_name:9696 \
-  --region regionOne
 # install the packages
 # add the ubuntu cloud ring support for juno
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
