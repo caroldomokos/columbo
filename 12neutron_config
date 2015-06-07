@@ -1,6 +1,5 @@
 #!/bin/bash
 # setup keystone
-source /opt/admin-openrc.sh
 source /opt/base_config.rc
 # install the packages
 # add the ubuntu cloud ring support for juno
