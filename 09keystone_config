@@ -117,9 +117,9 @@ keystone service-create --name nova --type compute \
   --description "OpenStack Compute"
 keystone endpoint-create \
   --service-id $(keystone service-list | awk '/ compute / {print $2}') \
-  --publicurl http://$host_name:8774/v2/%\(tenant_id\)s \
-  --internalurl http://$host_name:8774/v2/%\(tenant_id\)s \
-  --adminurl http://$host_name:8774/v2/%\(tenant_id\)s \
+  --publicurl http://$nova_ip:8774/v2/%\(tenant_id\)s \
+  --internalurl http://$nova_ip:8774/v2/%\(tenant_id\)s \
+  --adminurl http://$nova_ip:8774/v2/%\(tenant_id\)s \
   --region regionOne
 #keystone neutron commands
 keystone user-create --name neutron --pass $master_pass
@@ -128,7 +128,7 @@ keystone service-create --name neutron --type network \
   --description "OpenStack Networking"
 keystone endpoint-create \
   --service-id $(keystone service-list | awk '/ network / {print $2}') \
-  --publicurl http://$host_name:9696 \
-  --adminurl http://$host_name:9696 \
-  --internalurl http://$host_name:9696 \
+  --publicurl http://$neutron_ip:9696 \
+  --adminurl http://$neutron_ip:9696 \
+  --internalurl http://$neutron_ip:9696 \
   --region regionOne
