@@ -1,5 +1,6 @@
 #!/bin/bash
 source /opt/base_config.rc
+source /opt/admin-openrc.sh
 # install the packages
 # add the ubuntu cloud ring support for juno
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \

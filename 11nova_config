@@ -1,6 +1,7 @@
 #!/bin/bash
 # setup keystone
 source /opt/base_config.rc
+source /opt/admin-openrc.sh
 ## install the nova controller packages only
 # add the ubuntu cloud ring support for juno
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
