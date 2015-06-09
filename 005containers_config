@@ -5,7 +5,7 @@ apt-get install lxc lxctl -y
 lxc-create -t download -n trusty -- --dist ubuntu --release trusty --arch amd64
 # install some usefull sw
 lxc-attach -n trusty -- apt-get update
-lxc-attach -n trusty -- apt-get install nano tcpdump 
+lxc-attach -n trusty -- apt-get install nano tcpdump telnet -y
 echo "cloning the openstack containers"
 for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
 do
