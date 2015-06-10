@@ -4,8 +4,10 @@ echo "installing lxc and creating the first ubuntu trusty container"
 apt-get install lxc lxctl -y
 lxc-create -t download -n trusty -- --dist ubuntu --release trusty --arch amd64
 # install some usefull sw
+lxc-start -n trusty 
 lxc-attach -n trusty -- apt-get update
 lxc-attach -n trusty -- apt-get install nano tcpdump telnet -y
+lxc-stop -n trusty
 echo "cloning the openstack containers"
 for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
 do
@@ -117,4 +119,3 @@ lxc-start -n $container_name -d
 lxc-stop -n $container_name
 lxc-start -n $container_name -d
 done
-
