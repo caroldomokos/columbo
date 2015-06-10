@@ -18,9 +18,6 @@ echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
 apt-get update && apt-get install ubuntu-cloud-keyring -y 
 echo "installing lxc and creating the first ubuntu trusty container"
-apt-get install lxc lxctl -y
-lxc-create -t download -n trusty -- --dist ubuntu --release trusty --arch amd64
-lxc-clone trusty database
 echo "005"
 ./005containers_config
 echo "00"
