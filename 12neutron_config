@@ -63,7 +63,7 @@ enable_security_group = True
 enable_ipset = True
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
 [ovs]
-local_ip = $ip_eth1
+local_ip = $neutron_ip
 enable_tunneling = True
 bridge_mappings = external:br-ex
 [agent]
@@ -104,12 +104,12 @@ pkill dnsmasq
 cat > /etc/neutron/metadata_agent.ini <<EOF
 [DEFAULT]
 verbose = True
-auth_url = http://$host_name:5000/v2.0
+auth_url = http://$keystone_ip:5000/v2.0
 auth_region = RegionOne
 admin_tenant_name = service
 admin_user = neutron
 admin_password = $master_pass
-nova_metadata_ip = $host_name
+nova_metadata_ip = $nova_ip
 metadata_proxy_shared_secret = $master_pass
 EOF
 service nova-api restart
