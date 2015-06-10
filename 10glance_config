@@ -117,9 +117,8 @@ service glance-api restart
 #Because this configuration uses a SQL database server, you can remove the SQLite database file:
 rm -f /var/lib/glance/glance.sqlite
 ##verification - upload and check cirros 
-glance image-create --name "cirros-0.3.3-x86_64" --disk-format=qcow2 \
-  --container-format=bare --is-public=true \
-  --copy-from http://cdn.download.cirros-cloud.net/0.3.3/cirros-0.3.3-x86_64-disk.img
+wget http://download.cirros-cloud.net/0.3.3/cirros-0.3.3-x86_64-disk.img
+glance image-create --name "cirros-0.3.3-x86_64" --file cirros-0.3.3-x86_64-disk.img --disk-format qcow2 --container-format bare --is-public True --progress
 echo glance images list > glance_test_results
 glance image-list >> glance_test_results
 
