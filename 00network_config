@@ -6,7 +6,5 @@ iface lo inet loopback
 auto eth0
 iface eth0 inet manual
 auto eth1
-iface eth1 inet static
-address $ip_eth1
-netmask $mask_eth1
+iface eth1 inet manual
 EOF

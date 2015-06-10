@@ -22,12 +22,12 @@ auth_strategy = keystone
 allow_overlapping_ips = True
 notify_nova_on_port_status_changes = True
 notify_nova_on_port_data_changes = True
-nova_url = http://$host_name:8774/v2
+nova_url = http://$nova_ip:8774/v2
 nova_region_name = regionOne
 nova_admin_username = nova
 nova_admin_tenant_id = $(keystone tenant-get service | awk '/id/ {print $4}')
 nova_admin_password = $master_pass
-rabbit_host=$host_name
+rabbit_host=$rabbit_ip
 rabbit_password=$master_pass
 rpc_backend=rabbit
 [matchmaker_redis]
@@ -36,13 +36,13 @@ rpc_backend=rabbit
 [agent]
 root_helper = sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf
 [keystone_authtoken]
-auth_uri = http://$host_name:5000/v2.0
-identity_uri = http://$host_name:35357
+auth_uri = http://$keystone_ip:5000/v2.0
+identity_uri = http://$keystone_ip:35357
 admin_tenant_name = service
 admin_user = neutron
 admin_password = $master_pass
 [database]
-connection=mysql://neutron:$master_pass@$host_name:3306/neutron
+connection=mysql://neutron:$master_pass@$database_ip:3306/neutron
 [service_providers]
 service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
 service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default

@@ -14,4 +14,12 @@ bridge_ports eth0
 bridge_stp off
 bridge_fd 2
 bridge_maxwait 20
+auto admin_bridge
+iface admin_bridge inet static
+address $ip_eth1
+netmask $mask_eth1
+bridge_ports eth1
+bridge_stp off
+bridge_fd 2
+bridge_maxwait 20
 EOF
