@@ -10,7 +10,7 @@ echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
 #https://github.com/dguitarbite/OpenStack-Folsom-VM-SandBox-Guide/issues/5
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
 apt-get update && apt-get install ubuntu-cloud-keyring -y 
-apt-get install neutron-server neutron-plugin-ml2 python-neutronclient pyhon-mysqldb -y
+apt-get install neutron-server neutron-plugin-ml2 python-neutronclient python-mysqldb -y
 cat > /etc/neutron/neutron.conf <<EOF
 [DEFAULT]
 verbose=True
@@ -71,10 +71,11 @@ firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewal
 EOF
 su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade juno" neutron
-service nova-api restart
-service nova-scheduler restart
-service nova-conductor restart
-service neutron-server restart
+### maybe lxc-attach inside modular???
+#service nova-api restart
+#service nova-scheduler restart
+#service nova-conductor restart
+#service neutron-server restart
 sleep 1
 ###testing again
 ###network node only
