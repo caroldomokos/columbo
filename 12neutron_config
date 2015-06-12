@@ -77,11 +77,11 @@ service nova-conductor restart
 service neutron-server restart
 sleep 1
 ###testing again
-neutron ext-list > neutron_test_results
-echo "1" > /proc/sys/net/ipv4/ip_forward
-echo "0" > /proc/sys/net/ipv4/conf/all/rp_filter
-echo "0" > /proc/sys/net/ipv4/conf/default/rp_filter
 ###network node only
+#neutron ext-list > neutron_test_results
+#echo "1" > /proc/sys/net/ipv4/ip_forward
+#echo "0" > /proc/sys/net/ipv4/conf/all/rp_filter
+#echo "0" > /proc/sys/net/ipv4/conf/default/rp_filter
 #sysctl -p
 #cat > /etc/neutron/l3_agent.ini <<EOF
 #[DEFAULT]
