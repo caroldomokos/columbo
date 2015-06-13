@@ -75,7 +75,7 @@ su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
 #service nova-api restart
 #service nova-scheduler restart
 #service nova-conductor restart
-#service neutron-server restart
+service neutron-server restart
 sleep 1
 ###testing again
 ###network node only

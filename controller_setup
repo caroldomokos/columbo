@@ -81,3 +81,14 @@ echo "12"
 lxc-attach -n neutron -- /opt/05resolvconf_config
 lxc-attach -n neutron --  service resolvconf restart
 lxc-attach -n neutron -- /opt/12neutron_config
+lxc-attach -n nova -- service nova-api restart
+lxc-attach -n nova -- service nova-scheduler restart
+lxc-attach -n nova -- service nova-conductor restart
+# restart the containers for good measure
+for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
+do
+lxc-stop -n $container_name
+sleep 1
+lxc-start -n $container_name -d
+done
+
