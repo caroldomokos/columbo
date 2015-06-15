@@ -50,3 +50,5 @@ export OS_AUTH_URL=http://$keystone_ip:35357/v2.0
 EOF
 echo "20"
 ./20nova_compute_config
+source admin-openrc.sh
+lxc-attach -n nova -- nova service-list > nova-test
