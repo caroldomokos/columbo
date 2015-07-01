@@ -1,0 +1,114 @@
+#!/bin/bash
+# setup keystone
+source base_config.rc
+source admin-openrc.sh
+echo "1" > /proc/sys/net/ipv4/ip_forward
+echo "0" > /proc/sys/net/ipv4/conf/all/rp_filter
+echo "0" > /proc/sys/net/ipv4/conf/default/rp_filter
+sysctl -p
+apt-get install neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent python-mysqldb -y
+cat > /etc/neutron/neutron.conf <<EOF
+[DEFAULT]
+verbose=True
+lock_path = $state_path/lock
+core_plugin = ml2
+service_plugins = router
+auth_strategy = keystone
+allow_overlapping_ips = True
+notify_nova_on_port_status_changes = True
+notify_nova_on_port_data_changes = True
+nova_url = http://$nova_ip:8774/v2
+nova_region_name = regionOne
+nova_admin_username = nova
+nova_admin_tenant_id = $(keystone tenant-get service | awk '/id/ {print $4}')
+nova_admin_password = $master_pass
+rabbit_host=$rabbit_ip
+rabbit_password=$master_pass
+rpc_backend=rabbit
+[matchmaker_redis]
+[matchmaker_ring]
+[quotas]
+[agent]
+root_helper = sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf
+[keystone_authtoken]
+auth_uri = http://$keystone_ip:5000/v2.0
+identity_uri = http://$keystone_ip:35357
+admin_tenant_name = service
+admin_user = neutron
+admin_password = $master_pass
+[database]
+connection=mysql://neutron:$master_pass@$database_ip:3306/neutron
+[service_providers]
+service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
+service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+EOF
+cat > /etc/neutron/plugins/ml2/ml2_conf.ini <<EOF
+[ml2]
+type_drivers = flat,gre
+tenant_network_types = gre
+mechanism_drivers = openvswitch
+[ml2_type_flat]
+flat_networks = external
+[ml2_type_vlan]
+[ml2_type_gre]
+tunnel_id_ranges = 1:1000
+[ml2_type_vxlan]
+[securitygroup]
+enable_security_group = True
+enable_ipset = True
+firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+# this is for the network node only
+[ovs]
+local_ip = $network_node_ip
+enable_tunneling = True
+bridge_mappings = external:br-ex
+[agent]
+tunnel_types = gre
+EOF
+### maybe lxc-attach inside modular???
+#service nova-api restart
+#service nova-scheduler restart
+#service nova-conductor restart
+service neutron-server restart
+sleep 1
+cat > /etc/neutron/l3_agent.ini <<EOF
+[DEFAULT]
+verbose = True
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+use_namespaces = True
+external_network_bridge = br-ex
+EOF
+cat > /etc/neutron/dhcp_agent.ini <<EOF
+[DEFAULT]
+verbose = True
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
+use_namespaces = True
+dnsmasq_config_file = /etc/neutron/dnsmasq-neutron.conf
+EOF
+cat > /etc/neutron/dnsmasq-neutron.conf <<EOF
+dhcp-option-force=26,1454
+EOF
+pkill dnsmasq
+cat > /etc/neutron/metadata_agent.ini <<EOF
+[DEFAULT]
+verbose = True
+auth_url = http://$keystone_ip:5000/v2.0
+auth_region = RegionOne
+admin_tenant_name = service
+admin_user = neutron
+admin_password = $master_pass
+nova_metadata_ip = $nova_ip
+metadata_proxy_shared_secret = $master_pass
+EOF
+#service nova-api restart
+#OVS section
+service openvswitch-switch restart
+ovs-vsctl add-br br-ex
+ovs-vsctl add-port br-ex eth2
+service neutron-plugin-openvswitch-agent restart
+service neutron-l3-agent restart
+service neutron-dhcp-agent restart
+service neutron-metadata-agent restart
+###testing
+neutron agent-list >> neutron_test_results
