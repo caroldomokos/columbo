@@ -1,12 +1,15 @@
-export ip_eth0=10.0.1.100
-export ip_eth1=10.0.2.100
-export ip_eth3=192.168.56.100
-export mask_eth0=255.255.255.0
+# the admin interface
+export ip_eth1=172.16.10.100
+# the tunnels interface
+export ip_eth2=172.16.20.100
+# the public interface
+export ip_eth3=192.168.1.100
 export mask_eth1=255.255.255.0
+export mask_eth2=255.255.255.0
 export mask_eth3=255.255.255.0
 export host_name=columbo
 export master_pass=secret
-export dg_eth0=10.0.1.1
+export dg_eth1=172.16.10.1
 export database_ip=10.0.1.201
 export rabbit_ip=10.0.1.202
 export keystone_ip=10.0.1.203
@@ -14,5 +17,4 @@ export glance_ip=10.0.1.204
 export nova_ip=10.0.1.205
 export nova_compute_ip=10.0.1.100
 export neutron_ip=10.0.1.206
-export network_node_ip=192.168.1.100
 export admin_gateway_ip=10.0.1.1

@@ -1,7 +1,7 @@
 #!/bin/bash
 cat >> /etc/network/interfaces <<'EOF'
-auto eth2
-iface eth2 inet manual
+auto eth3
+iface eth3 inet manual
 up ip link set dev $IFACE up
 down ip link set dev $IFACE down
 EOF
