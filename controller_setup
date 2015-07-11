@@ -9,6 +9,13 @@ read -p "This script will install openstack basic components (keystone,nova,neut
 #export LC_ALL
 # source the variables
 source base_config.rc
+echo "creating the admin credentials"
+cat > admin-openrc.sh <<EOF
+export OS_TENANT_NAME=admin
+export OS_USERNAME=admin
+export OS_PASSWORD=$master_pass
+export OS_AUTH_URL=http://$keystone_ip:35357/v2.0
+EOF
 echo "updating the system"
 # add the ubuntu cloud ring support for juno
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
@@ -46,13 +53,6 @@ echo "05"
 #let's update the system
 #echo "06"
 #./06apt_config
-echo "creating the admin credentials"
-cat > admin-openrc.sh <<EOF
-export OS_TENANT_NAME=admin
-export OS_USERNAME=admin
-export OS_PASSWORD=$master_pass
-export OS_AUTH_URL=http://$keystone_ip:35357/v2.0
-EOF
 # create the db container
 echo "07"
 lxc-attach -n database -- /opt/05resolvconf_config
