@@ -116,6 +116,9 @@ do
 cp *config* /var/lib/lxc/$container_name/rootfs/opt/
 cp admin-openrc.sh /var/lib/lxc/$container_name/rootfs/opt/ 
 lxc-start -n $container_name -d
+sleep 1
 lxc-stop -n $container_name
+sleep 1
 lxc-start -n $container_name -d
+sleep 1
 done
