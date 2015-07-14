@@ -19,11 +19,14 @@ cat > /var/lib/lxc/database/config <<EOF
 lxc.include = /usr/share/lxc/config/ubuntu.common.conf
 lxc.arch = x86_64
 lxc.network.type = veth
+lxc.network.link = lxcbr0
+lxc.network.flags = up
+lxc.network.hwaddr = 00:16:3e:xx:xx:xx
+lxc.network.type = veth
 lxc.network.flags = up
 lxc.network.link = admin_bridge
 lxc.network.hwaddr = 00:00:00:00:00:01
 lxc.network.ipv4 = $database_ip
-lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/database/rootfs
 lxc.utsname = database
 lxc.start.auto = 1
@@ -35,11 +38,14 @@ cat > /var/lib/lxc/rabbit/config <<EOF
 lxc.include = /usr/share/lxc/config/ubuntu.common.conf
 lxc.arch = x86_64
 lxc.network.type = veth
+lxc.network.link = lxcbr0
+lxc.network.flags = up
+lxc.network.hwaddr = 00:16:3e:xx:xx:xx
+lxc.network.type = veth
 lxc.network.flags = up
 lxc.network.link = admin_bridge
 lxc.network.hwaddr = 00:00:00:00:00:02
 lxc.network.ipv4 = $rabbit_ip
-lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/rabbit/rootfs
 lxc.utsname = rabbit
 lxc.start.auto = 1
@@ -51,11 +57,14 @@ cat > /var/lib/lxc/keystone/config <<EOF
 lxc.include = /usr/share/lxc/config/ubuntu.common.conf
 lxc.arch = x86_64
 lxc.network.type = veth
+lxc.network.link = lxcbr0
+lxc.network.flags = up
+lxc.network.hwaddr = 00:16:3e:xx:xx:xx
+lxc.network.type = veth
 lxc.network.flags = up
 lxc.network.link = admin_bridge
 lxc.network.hwaddr = 00:00:00:00:00:03
 lxc.network.ipv4 = $keystone_ip
-lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/keystone/rootfs
 lxc.utsname = keystone
 lxc.start.auto = 1
@@ -67,11 +76,14 @@ cat > /var/lib/lxc/glance/config <<EOF
 lxc.include = /usr/share/lxc/config/ubuntu.common.conf
 lxc.arch = x86_64
 lxc.network.type = veth
+lxc.network.link = lxcbr0
+lxc.network.flags = up
+lxc.network.hwaddr = 00:16:3e:xx:xx:xx
+lxc.network.type = veth
 lxc.network.flags = up
 lxc.network.link = admin_bridge
 lxc.network.hwaddr = 00:00:00:00:00:04
 lxc.network.ipv4 = $glance_ip
-lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/glance/rootfs
 lxc.utsname = glance
 lxc.start.auto = 1
@@ -83,11 +95,14 @@ cat > /var/lib/lxc/nova/config <<EOF
 lxc.include = /usr/share/lxc/config/ubuntu.common.conf
 lxc.arch = x86_64
 lxc.network.type = veth
+lxc.network.link = lxcbr0
+lxc.network.flags = up
+lxc.network.hwaddr = 00:16:3e:xx:xx:xx
+lxc.network.type = veth
 lxc.network.flags = up
 lxc.network.link = admin_bridge
 lxc.network.hwaddr = 00:00:00:00:00:05
 lxc.network.ipv4 = $nova_ip
-lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/nova/rootfs
 lxc.utsname = nova
 lxc.start.auto = 1
@@ -99,11 +114,14 @@ cat > /var/lib/lxc/neutron/config <<EOF
 lxc.include = /usr/share/lxc/config/ubuntu.common.conf
 lxc.arch = x86_64
 lxc.network.type = veth
+lxc.network.link = lxcbr0
+lxc.network.flags = up
+lxc.network.hwaddr = 00:16:3e:xx:xx:xx
+lxc.network.type = veth
 lxc.network.flags = up
 lxc.network.link = admin_bridge
 lxc.network.hwaddr = 00:00:00:00:00:06
 lxc.network.ipv4 = $neutron_ip
-lxc.network.ipv4.gateway = $admin_gateway_ip
 lxc.rootfs = /var/lib/lxc/neutron/rootfs
 lxc.utsname = neutron
 lxc.start.auto = 1
@@ -116,9 +134,9 @@ do
 cp *config* /var/lib/lxc/$container_name/rootfs/opt/
 cp admin-openrc.sh /var/lib/lxc/$container_name/rootfs/opt/ 
 lxc-start -n $container_name -d
-sleep 1
+sleep 3
 lxc-stop -n $container_name
-sleep 1
+sleep 3
 lxc-start -n $container_name -d
-sleep 1
+sleep 3
 done
