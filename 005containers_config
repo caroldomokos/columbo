@@ -5,6 +5,7 @@ apt-get install lxc lxctl -y
 lxc-create -t download -n trusty -- --dist ubuntu --release trusty --arch amd64
 # install some usefull sw
 lxc-start -n trusty 
+sleep 3
 lxc-attach -n trusty -- apt-get update
 lxc-attach -n trusty -- apt-get install nano tcpdump telnet -y
 lxc-stop -n trusty
@@ -133,10 +134,10 @@ for container_name in "database" "rabbit" "keystone" "glance" "nova" "neutron"
 do
 cp *config* /var/lib/lxc/$container_name/rootfs/opt/
 cp admin-openrc.sh /var/lib/lxc/$container_name/rootfs/opt/ 
-lxc-start -n $container_name -d
-sleep 3
-lxc-stop -n $container_name
-sleep 3
-lxc-start -n $container_name -d
-sleep 3
+#lxc-start -n $container_name -d
+#sleep 3
+#lxc-stop -n $container_name
+#sleep 3
+#lxc-start -n $container_name -d
+#sleep 3
 done

@@ -16,6 +16,7 @@ export OS_USERNAME=admin
 export OS_PASSWORD=$master_pass
 export OS_AUTH_URL=http://$keystone_ip:35357/v2.0
 EOF
+source admin-openrc.sh
 echo "updating the system"
 # add the ubuntu cloud ring support for juno
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
@@ -25,8 +26,6 @@ echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu" \
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
 apt-get update && apt-get install ubuntu-cloud-keyring -y 
 echo "installing lxc and creating the first ubuntu trusty container"
-echo "005"
-./005containers_config
 echo "00"
 ./00network_config
 # set the public interface separately so that the variable would not be substituted
@@ -54,33 +53,47 @@ echo "05"
 #echo "06"
 #./06apt_config
 # create the db container
+echo "005"
+./005containers_config
 echo "07"
+lxc-start -n datatbase
+sleep 3
 lxc-attach -n database -- /opt/05resolvconf_config
 lxc-attach -n database --  service resolvconf restart
 lxc-attach -n database -- /opt/07mariadb_config
 # create the messaging container
 echo "08"
+lxc-start -n rabbit
+sleep 3
 lxc-attach -n rabbit -- /opt/05resolvconf_config
 lxc-attach -n rabbit --  service resolvconf restart
 lxc-attach -n rabbit -- /opt/08rabbitmq_config
 #####keystone#####
 ##################
 echo "09"
+lxc-start -n keystone
+sleep 3
 lxc-attach -n keystone -- /opt/05resolvconf_config
 lxc-attach -n keystone --  service resolvconf restart
 lxc-attach -n keystone -- /opt/09keystone_config
 # create the image container
 echo "10"
+lxc-start -n glance
+sleep 3
 lxc-attach -n glance -- /opt/05resolvconf_config
 lxc-attach -n glance --  service resolvconf restart
 lxc-attach -n glance -- /opt/10glance_config
 # create the nova server container
 echo "11"
+lxc-start -n ova
+sleep 3
 lxc-attach -n nova -- /opt/05resolvconf_config
 lxc-attach -n nova --  service resolvconf restart
 lxc-attach -n nova -- /opt/11nova_config
 # create the neutron server container
 echo "12"
+lxc-start -n  neutron
+sleep 3
 lxc-attach -n neutron -- /opt/05resolvconf_config
 lxc-attach -n neutron --  service resolvconf restart
 lxc-attach -n neutron -- /opt/12neutron_config
